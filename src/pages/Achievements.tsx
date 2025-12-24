@@ -2,28 +2,25 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { AchievementWrappedCard } from "@/components/ui/AchievementWrappedCard";
+import { WrappedModal } from "@/components/ui/WrappedModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
-import { ArrowLeft, Lock, Sparkles, Loader2 } from "lucide-react";
-
-const rarityColors: Record<string, string> = {
-  Common: "text-muted-foreground",
-  Uncommon: "text-neon-green",
-  Rare: "text-primary",
-  Epic: "text-accent",
-  Legendary: "text-yellow-500",
-  Mythic: "text-destructive",
-  Secret: "text-foreground",
-};
+import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 
 export const Achievements = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { achievements, isLoading } = useAchievements();
+  const { achievements, chainStats, isLoading } = useAchievements();
+  const { chain } = useProcrastinationChain();
   
-  const [selectedAchievement, setSelectedAchievement] = useState<string | null>(null);
+  const [selectedAchievement, setSelectedAchievement] = useState<{
+    code: string;
+    name: string;
+    icon: string;
+  } | null>(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -33,6 +30,31 @@ export const Achievements = () => {
   }, [user, authLoading, navigate]);
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
+
+  // Calculate top excuses from chain
+  const excuseCounts = chain.reduce((acc, block) => {
+    acc[block.excuse] = (acc[block.excuse] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topExcuses = Object.entries(excuseCounts)
+    .map(([excuse, count]) => ({ excuse, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3);
+
+  // Get top activity
+  const topActivity = Object.entries(chainStats.activityCounts)
+    .sort((a, b) => b[1] - a[1])[0];
+
+  // Get badges for modal
+  const unlockedBadges = achievements
+    .filter(a => a.unlocked)
+    .map(a => ({
+      code: a.code,
+      name: a.name,
+      icon: a.icon,
+      unlockedAt: a.unlockedAt,
+    }));
 
   if (authLoading || isLoading) {
     return (
@@ -72,7 +94,7 @@ export const Achievements = () => {
             Achievements
           </h1>
           <p className="text-muted-foreground">
-            Badges of dishonor for your laziness
+            Click any badge for your personal Wrapped card
           </p>
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/50">
             <Sparkles className="w-4 h-4 text-primary" />
@@ -91,58 +113,20 @@ export const Achievements = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
             >
-              <motion.div
-                whileHover={achievement.unlocked ? { 
-                  scale: 1.05, 
-                  rotateY: 15,
-                  rotateX: -5 
-                } : undefined}
-                transition={{ type: "spring", stiffness: 300 }}
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <GlassCard 
-                  className={`text-center cursor-pointer h-full ${
-                    !achievement.unlocked && "opacity-40 grayscale"
-                  }`}
-                  hoverable={achievement.unlocked}
-                  onClick={() => setSelectedAchievement(
-                    selectedAchievement === achievement.code ? null : achievement.code
-                  )}
-                >
-                  <motion.div 
-                    className="text-5xl mb-3"
-                    animate={achievement.unlocked ? {
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0],
-                    } : {}}
-                    transition={{ 
-                      duration: 2, 
-                      repeat: Infinity, 
-                      repeatDelay: index * 0.5 
-                    }}
-                  >
-                    {achievement.unlocked ? achievement.icon : (
-                      <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
-                    )}
-                  </motion.div>
-                  <h3 className="font-heading font-semibold text-sm mb-1">
-                    {achievement.name}
-                  </h3>
-                  <p className={`text-xs ${rarityColors[achievement.rarity]}`}>
-                    {achievement.rarity}
-                  </p>
-                  
-                  {selectedAchievement === achievement.code && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      className="text-xs text-muted-foreground mt-2 pt-2 border-t border-border/30"
-                    >
-                      {achievement.description}
-                    </motion.p>
-                  )}
-                </GlassCard>
-              </motion.div>
+              <AchievementWrappedCard
+                code={achievement.code}
+                name={achievement.name}
+                description={achievement.description}
+                icon={achievement.icon}
+                rarity={achievement.rarity}
+                unlocked={achievement.unlocked}
+                unlockedAt={achievement.unlockedAt}
+                onClick={() => setSelectedAchievement({
+                  code: achievement.code,
+                  name: achievement.name,
+                  icon: achievement.icon,
+                })}
+              />
             </motion.div>
           ))}
         </div>
@@ -157,6 +141,20 @@ export const Achievements = () => {
           Psst... there might be a secret achievement. Keep procrastinating to find it.
         </motion.p>
       </main>
+
+      {/* Wrapped Modal */}
+      <WrappedModal
+        isOpen={!!selectedAchievement}
+        onClose={() => setSelectedAchievement(null)}
+        achievementName={selectedAchievement?.name || ""}
+        achievementIcon={selectedAchievement?.icon || "🏆"}
+        totalMinutes={chainStats.totalMinutes}
+        topActivity={topActivity ? { name: topActivity[0], count: topActivity[1] } : null}
+        topExcuses={topExcuses}
+        badges={unlockedBadges}
+        longestSession={chainStats.longestSession}
+        totalSessions={chainStats.totalSessions}
+      />
     </div>
   );
 };
