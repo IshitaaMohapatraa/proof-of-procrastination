@@ -1,73 +1,198 @@
-# Welcome to your Lovable project
+LINK: https://dopamine-decay-drive.lovable.app
 
-## Project info
+🚀 What is this?
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Proof of Procrastination is a satirical yet technically sound web application that cryptographically proves how, when, and where you wasted your time.
 
-## How can I edit this code?
+Instead of productivity tracking, this app does the opposite — it celebrates procrastination by logging sessions into an immutable chain, generating achievements, and creating Spotify Wrapped–style shareable cards.
 
-There are several ways of editing your application.
+It looks useless.
+It is fun.
+But under the hood — it’s real logic, real UX, real engineering.
 
-**Use Lovable**
+🧠 The Core Idea
 
-Simply visit the [Lovable Project](https://dopamine-decay-drive.lovable.app) and start prompting.
+If blockchains can track money…
+why can’t we track doomscrolling, overthinking, and “just 5 minutes”?
 
-Changes made via Lovable will be committed automatically to this repo.
+Each procrastination session becomes:
 
-**Use your preferred IDE**
+A block
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+With a hash
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Linked to the previous session
 
-Follow these steps:
+Forming a Procrastination Chain
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+You don’t fix procrastination here.
+You prove it happened.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+🎯 Why this exists (Problem)
 
-# Step 3: Install the necessary dependencies.
-npm i
+Students and creators:
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Waste time unconsciously
 
-**Edit a file directly in GitHub**
+Forget where their hours go
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Get shamed by productivity apps
 
-**Use GitHub Codespaces**
+Existing tools:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Are boring
 
-## What technologies are used for this project?
+Feel judgmental
 
-This project is built with:
+Don’t make people want to reflect
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This project flips the narrative:
 
-## How can I deploy this project?
+“You procrastinated. Own it. Archive it. Share it.”
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+✨ Key Features
+🔗 Procrastination Chain
 
-## Can I connect a custom domain to my Lovable project?
+Every session is stored as a cryptographically linked block
 
-Yes, you can!
+Shows:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Latest Block Hash (clickable, explained)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Chain Length (clickable, visualized)
+
+Total Sessions (clickable, broken down)
+
+⏳ Session Logging
+
+Log wasted time by activity:
+
+Doomscrolling
+
+Overthinking
+
+YouTube spiral
+
+Existential crisis (yes)
+
+Smooth animations when a block is created
+
+🏆 Achievements (Gamified)
+
+Unlock badges like:
+
+First Delay
+
+Hour Waster
+
+Chronic Procrastinator
+
+Badges can be:
+
+Displayed on profile
+
+Clicked to generate Wrapped cards
+
+🎧 Procrastination Wrapped™
+
+Spotify Wrapped–style flash cards
+
+Shows:
+
+Total time wasted
+
+Most wasted activity
+
+Peak procrastination hour
+
+One-click share to social media
+
+🌗 Dark / Light Modes
+
+Dark Mode: Neon pink text, cyberpunk vibe
+
+Light Mode: Dating-app aesthetic (clean, playful)
+
+Theme persists across sessions
+
+🌪 Chaos Mode
+
+Optional mode for dramatic UI:
+
+Faster animations
+
+Glitch effects
+
+Loud transitions
+
+Completely optional. Completely unnecessary. Completely fun.
+
+🧩 Pages & Navigation
+
+Landing Page – Dramatic intro, visuals, CTA
+
+Login / Entry Page – Minimal, smooth transition
+
+Dashboard – Stats + chain summary
+
+Chain Viewer – Visual explanation of hashes & blocks
+
+Log Session Page – Add new procrastination block
+
+Achievements Page – Badges & Wrapped cards
+
+Wrapped Card View – Shareable certificate
+
+Profile Page – User stats + achievements
+
+Settings – Theme, Chaos Mode, preferences
+
+Explainer Modals – For hash, chain, sessions
+
+About / Philosophy – Why this exists
+
+🛠 Tech Stack
+
+Frontend
+
+React
+
+Tailwind CSS
+
+Advanced animations & hover effects
+
+Lovable AI (UI generation & iteration)
+
+Backend (Planned / Extendable)
+
+Supabase (Auth + Database)
+
+PostgreSQL schema for:
+
+Users
+
+Sessions
+
+Blocks
+
+Achievements
+
+Hosting
+
+Lovable App Hosting
+
+🧪 Is this actually useful?
+
+Yes — but emotionally, not operationally.
+
+It helps users:
+
+Reflect without guilt
+
+Laugh at their habits
+
+Become aware through play
+
+Share their behavior socially
+
+It’s intentionally “useless”, but thoughtfully built.
