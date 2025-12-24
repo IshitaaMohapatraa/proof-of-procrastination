@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { WrappedCard } from "@/components/ui/WrappedCard";
@@ -42,48 +42,51 @@ export const Profile = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Calculate wrapped stats
-  const totalHours = Math.floor(chainStats.totalMinutes / 60);
-  const totalMinutes = chainStats.totalMinutes % 60;
-  const longestSession = chainStats.longestSession;
+  // Memoized calculations
+  const { totalHours, totalMinutes, longestSession } = useMemo(() => ({
+    totalHours: Math.floor(chainStats.totalMinutes / 60),
+    totalMinutes: chainStats.totalMinutes % 60,
+    longestSession: chainStats.longestSession,
+  }), [chainStats.totalMinutes, chainStats.longestSession]);
   
-  // Most common activity
-  const activityCounts = chain.reduce((acc, block) => {
-    acc[block.activity_type] = (acc[block.activity_type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const mostCommonActivity = Object.entries(activityCounts)
-    .sort(([, a], [, b]) => b - a)[0];
+  const mostCommonActivity = useMemo(() => {
+    const activityCounts = chain.reduce((acc, block) => {
+      acc[block.activity_type] = (acc[block.activity_type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(activityCounts).sort(([, a], [, b]) => b - a)[0];
+  }, [chain]);
 
-  // Top excuses
-  const excuseCounts = chain.reduce((acc, block) => {
-    if (block.excuse && block.excuse !== "No excuse provided") {
-      acc[block.excuse] = (acc[block.excuse] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const topExcuses = Object.entries(excuseCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 3)
-    .map(([excuse, count]) => ({ excuse, count }));
+  const topExcuses = useMemo(() => {
+    const excuseCounts = chain.reduce((acc, block) => {
+      if (block.excuse && block.excuse !== "No excuse provided") {
+        acc[block.excuse] = (acc[block.excuse] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(excuseCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([excuse, count]) => ({ excuse, count }));
+  }, [chain]);
 
-  const equippedBadges = achievements.filter(a => a.unlocked).slice(0, 3);
-  const unlockedBadges = achievements
-    .filter(a => a.unlocked)
-    .map(a => ({
-      code: a.code,
-      name: a.name,
-      icon: a.icon,
-      unlockedAt: a.unlockedAt,
-    }));
-
-  // Get top achievement for the card
-  const topAchievement = achievements.find(a => a.unlocked) || {
-    name: "Procrastinator",
-    icon: "🦥",
-  };
+  const { equippedBadges, unlockedBadges, topAchievement } = useMemo(() => ({
+    equippedBadges: achievements.filter(a => a.unlocked).slice(0, 3),
+    unlockedBadges: achievements
+      .filter(a => a.unlocked)
+      .map(a => ({
+        code: a.code,
+        name: a.name,
+        icon: a.icon,
+        unlockedAt: a.unlockedAt,
+      })),
+    topAchievement: achievements.find(a => a.unlocked) || {
+      name: "Procrastinator",
+      icon: "🦥",
+    },
+  }), [achievements]);
 
   if (authLoading) {
     return (
@@ -95,7 +98,7 @@ export const Profile = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       <motion.div
         className="fixed top-4 left-4 z-50"

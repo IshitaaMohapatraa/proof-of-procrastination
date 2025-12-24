@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -132,7 +132,7 @@ export const Auth = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient flex items-center justify-center p-4">
-      <ParticleField />
+      <OptimizedParticleField />
 
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}

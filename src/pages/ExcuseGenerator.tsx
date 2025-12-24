@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -84,7 +84,7 @@ export const ExcuseGenerator = () => {
     }
   }, [user, authLoading, navigate]);
 
-  const generateExcuses = async () => {
+  const generateExcuses = useCallback(async () => {
     if (!selectedCategory) return;
     
     setIsGenerating(true);
@@ -97,9 +97,9 @@ export const ExcuseGenerator = () => {
     
     setGeneratedExcuses(shuffled);
     setIsGenerating(false);
-  };
+  }, [selectedCategory]);
 
-  const copyExcuse = (excuse: string, index: number) => {
+  const copyExcuse = useCallback((excuse: string, index: number) => {
     navigator.clipboard.writeText(excuse);
     setCopiedIndex(index);
     
@@ -112,7 +112,7 @@ export const ExcuseGenerator = () => {
     }
     
     setTimeout(() => setCopiedIndex(null), 2000);
-  };
+  }, [selectedCategory]);
 
   if (authLoading) {
     return (
@@ -124,7 +124,7 @@ export const ExcuseGenerator = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       <motion.div
         className="fixed top-4 left-4 z-50"

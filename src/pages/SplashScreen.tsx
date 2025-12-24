@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { TypewriterText } from "@/components/ui/TypewriterText";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { FloatingIcons } from "@/components/ui/FloatingIcons";
 import { ScrollCue } from "@/components/ui/ScrollCue";
 import { useAuth } from "@/hooks/useAuth";
+import { usePerformance } from "@/hooks/usePerformance";
 import { 
   Link2, 
   Trophy, 
@@ -22,16 +23,17 @@ import confetti from "canvas-confetti";
 export const SplashScreen = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { performanceMode } = usePerformance();
   const [showTagline, setShowTagline] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const [logoReady, setLogoReady] = useState(false);
   const [showSections, setShowSections] = useState(false);
 
   useEffect(() => {
-    const logoTimer = setTimeout(() => setLogoReady(true), 500);
-    const taglineTimer = setTimeout(() => setShowTagline(true), 1200);
-    const buttonTimer = setTimeout(() => setShowButton(true), 3500);
-    const sectionsTimer = setTimeout(() => setShowSections(true), 4000);
+    const logoTimer = setTimeout(() => setLogoReady(true), performanceMode ? 100 : 500);
+    const taglineTimer = setTimeout(() => setShowTagline(true), performanceMode ? 300 : 1200);
+    const buttonTimer = setTimeout(() => setShowButton(true), performanceMode ? 600 : 3500);
+    const sectionsTimer = setTimeout(() => setShowSections(true), performanceMode ? 800 : 4000);
     
     return () => {
       clearTimeout(logoTimer);
@@ -39,20 +41,22 @@ export const SplashScreen = () => {
       clearTimeout(buttonTimer);
       clearTimeout(sectionsTimer);
     };
-  }, []);
+  }, [performanceMode]);
 
-  const handleEnter = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#ff6ec7', '#bb77ff', '#ff4d6d', '#00f5ff'],
-    });
+  const handleEnter = useCallback(() => {
+    if (!performanceMode) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff6ec7', '#bb77ff', '#ff4d6d', '#00f5ff'],
+      });
+    }
     
     setTimeout(() => {
-      navigate(user ? "/dashboard" : "/auth");
-    }, 500);
-  };
+      navigate(user ? "/dashboard" : "/auth", { replace: true });
+    }, performanceMode ? 100 : 500);
+  }, [navigate, user, performanceMode]);
 
   const quickLinks = [
     { icon: Link2, label: "Chain Viewer", path: "/chain", color: "pink" },
@@ -65,8 +69,8 @@ export const SplashScreen = () => {
 
   return (
     <div className="relative min-h-[200vh] overflow-hidden animated-gradient">
-      <ParticleField />
-      <FloatingIcons />
+      <OptimizedParticleField />
+      {!performanceMode && <FloatingIcons />}
       
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-4">

@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useTheme } from "@/hooks/useTheme";
+import { usePerformance } from "@/hooks/usePerformance";
 import { useAnimatedCounter } from "@/hooks/useAnimatedCounter";
 import { 
   ArrowLeft, 
@@ -38,6 +39,7 @@ export const Certificate = () => {
   const { chain, validateChainIntegrity } = useProcrastinationChain();
   const { achievements, chainStats } = useAchievements();
   const { theme } = useTheme();
+  const { performanceMode } = usePerformance();
   
   const [displayName, setDisplayName] = useState("");
   const [chainValid, setChainValid] = useState(true);
@@ -90,22 +92,24 @@ export const Certificate = () => {
   }, []);
 
   const rootHash = chain.length > 0 ? chain[chain.length - 1].current_hash : "0".repeat(64);
-  const unlockedBadges = achievements.filter(a => a.unlocked);
+  const unlockedBadges = useMemo(() => achievements.filter(a => a.unlocked), [achievements]);
   
   // Get sarcasm level based on time wasted
   const sarcasmLevel = Math.min(Math.floor(chainStats.totalMinutes / 60), 3);
 
-  // Top excuses
-  const excuseCounts = chain.reduce((acc, block) => {
-    if (block.excuse && block.excuse !== "No excuse provided") {
-      acc[block.excuse] = (acc[block.excuse] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const topExcuses = Object.entries(excuseCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5);
+  // Top excuses - memoized
+  const topExcuses = useMemo(() => {
+    const excuseCounts = chain.reduce((acc, block) => {
+      if (block.excuse && block.excuse !== "No excuse provided") {
+        acc[block.excuse] = (acc[block.excuse] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return Object.entries(excuseCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+  }, [chain]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!certificateRef.current) return;
@@ -126,7 +130,7 @@ export const Certificate = () => {
     setTimeout(() => setSlothMood("idle"), 1500);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     if (!certificateRef.current) return;
     
     setIsDownloading(true);
@@ -142,32 +146,34 @@ export const Certificate = () => {
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      // Epic confetti explosion
-      const duration = 3000;
-      const animationEnd = Date.now() + duration;
-      const colors = isDark 
-        ? ['#ff6ec7', '#00fff5', '#7f5af0', '#ffd700'] 
-        : ['#e91e63', '#ff7043', '#9c27b0', '#ffc107'];
+      // Confetti only if not in performance mode
+      if (!performanceMode) {
+        const duration = 3000;
+        const animationEnd = Date.now() + duration;
+        const colors = isDark 
+          ? ['#ff6ec7', '#00fff5', '#7f5af0', '#ffd700'] 
+          : ['#e91e63', '#ff7043', '#9c27b0', '#ffc107'];
 
-      const interval = setInterval(() => {
-        const timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) return clearInterval(interval);
+        const interval = setInterval(() => {
+          const timeLeft = animationEnd - Date.now();
+          if (timeLeft <= 0) return clearInterval(interval);
 
-        confetti({
-          particleCount: 4,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors,
-        });
-        confetti({
-          particleCount: 4,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors,
-        });
-      }, 50);
+          confetti({
+            particleCount: 4,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors,
+          });
+          confetti({
+            particleCount: 4,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors,
+          });
+        }, 50);
+      }
 
       setSlothMood("clapping");
       setTimeout(() => setSlothMood("idle"), 3000);
@@ -176,18 +182,20 @@ export const Certificate = () => {
     } finally {
       setIsDownloading(false);
     }
-  };
+  }, [certificateRef, isDark, displayName, performanceMode]);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     const text = `🦥 Proof of Procrastination™ Certificate\n\n⏰ I wasted ${Math.floor(chainStats.totalMinutes / 60)}h ${chainStats.totalMinutes % 60}m provably!\n🔗 ${chain.length} blockchain blocks\n🏆 ${unlockedBadges.length} badges earned\n\nCertified by Proof of Procrastination™ #ProcrastinationChain`;
     
     if (navigator.share) {
       navigator.share({ title: 'My Procrastination Certificate', text });
     } else {
       navigator.clipboard.writeText(text);
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      if (!performanceMode) {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      }
     }
-  };
+  }, [chainStats.totalMinutes, chain.length, unlockedBadges.length, performanceMode]);
 
   if (authLoading) {
     return (
@@ -199,7 +207,7 @@ export const Certificate = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       {/* Back Button */}
       <motion.div
