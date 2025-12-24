@@ -1,39 +1,46 @@
-@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  :root {
-    /* Core dark theme - Deep indigo-black */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     DARK MODE (Default) - Neon Cyberpunk Theme
+     ═══════════════════════════════════════════════════════════════════════════ */
+  :root,
+  .dark {
+    /* Core dark theme - Deep night gradient base */
     --background: 240 30% 7%;
-    --foreground: 180 100% 95%;
+    --foreground: 320 100% 85%;
 
     /* Glass panels */
     --card: 240 30% 12%;
-    --card-foreground: 180 100% 95%;
+    --card-foreground: 320 100% 90%;
 
     --popover: 240 30% 10%;
-    --popover-foreground: 180 100% 95%;
+    --popover-foreground: 320 100% 90%;
 
-    /* Neon cyan primary */
-    --primary: 185 100% 50%;
+    /* Neon pink primary */
+    --primary: 320 100% 70%;
     --primary-foreground: 240 30% 7%;
-    --primary-glow: 185 100% 50%;
+    --primary-glow: 320 100% 70%;
 
-    /* Secondary - muted violet */
-    --secondary: 260 60% 45%;
-    --secondary-foreground: 180 100% 95%;
+    /* Cyan secondary */
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 240 30% 7%;
 
     /* Muted */
     --muted: 240 20% 18%;
     --muted-foreground: 220 10% 60%;
 
     /* Violet accent */
-    --accent: 260 70% 60%;
-    --accent-foreground: 180 100% 95%;
+    --accent: 280 80% 65%;
+    --accent-foreground: 240 30% 7%;
 
     /* Toxic red danger */
     --destructive: 345 100% 50%;
@@ -43,55 +50,114 @@
     /* Borders and inputs */
     --border: 240 20% 20%;
     --input: 240 20% 15%;
-    --ring: 185 100% 50%;
+    --ring: 320 100% 70%;
 
     --radius: 1rem;
 
     /* Custom neon colors */
-    --neon-cyan: 185 100% 50%;
-    --neon-violet: 260 70% 60%;
+    --neon-pink: 320 100% 70%;
+    --neon-cyan: 180 100% 50%;
+    --neon-violet: 280 80% 65%;
     --neon-red: 345 100% 50%;
     --neon-green: 150 100% 50%;
 
     /* Glass effect */
     --glass-bg: 240 30% 12%;
-    --glass-border: 240 20% 25%;
+    --glass-border: 320 50% 40%;
+
+    /* Gradient backgrounds */
+    --gradient-start: 240 30% 7%;
+    --gradient-end: 260 25% 12%;
 
     /* Sidebar (dark theme) */
     --sidebar-background: 240 30% 8%;
-    --sidebar-foreground: 180 100% 95%;
-    --sidebar-primary: 185 100% 50%;
+    --sidebar-foreground: 320 100% 90%;
+    --sidebar-primary: 320 100% 70%;
     --sidebar-primary-foreground: 240 30% 7%;
-    --sidebar-accent: 260 70% 60%;
+    --sidebar-accent: 280 80% 65%;
     --sidebar-accent-foreground: 180 100% 95%;
     --sidebar-border: 240 20% 20%;
-    --sidebar-ring: 185 100% 50%;
+    --sidebar-ring: 320 100% 70%;
+
+    /* Fonts */
     --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-    --font-sans: Montserrat, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
   }
 
-  .dark {
-    --background: 240 30% 7%;
-    --foreground: 180 100% 95%;
-    --card: 240 30% 12%;
-    --card-foreground: 180 100% 95%;
-    --popover: 240 30% 10%;
-    --popover-foreground: 180 100% 95%;
-    --primary: 185 100% 50%;
-    --primary-foreground: 240 30% 7%;
-    --secondary: 260 60% 45%;
-    --secondary-foreground: 180 100% 95%;
-    --muted: 240 20% 18%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 260 70% 60%;
-    --accent-foreground: 180 100% 95%;
-    --destructive: 345 100% 50%;
-    --destructive-foreground: 180 100% 95%;
-    --border: 240 20% 20%;
-    --input: 240 20% 15%;
-    --ring: 185 100% 50%;
+  /* ═══════════════════════════════════════════════════════════════════════════
+     LIGHT MODE - Dating App / Pastel Vibe
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .light {
+    /* Core light theme - Soft pastel gradient base */
+    --background: 340 30% 97%;
+    --foreground: 340 60% 25%;
+
+    /* Soft panels */
+    --card: 0 0% 100%;
+    --card-foreground: 340 60% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 340 60% 25%;
+
+    /* Rose pink primary */
+    --primary: 340 70% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 340 70% 60%;
+
+    /* Coral secondary */
+    --secondary: 15 80% 65%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Muted pastel */
+    --muted: 340 20% 92%;
+    --muted-foreground: 340 20% 45%;
+
+    /* Lavender accent */
+    --accent: 280 50% 70%;
+    --accent-foreground: 280 60% 25%;
+
+    /* Soft red danger */
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --danger-glow: 0 70% 55%;
+
+    /* Borders and inputs */
+    --border: 340 20% 88%;
+    --input: 340 15% 95%;
+    --ring: 340 70% 50%;
+
+    --radius: 1.25rem;
+
+    /* Custom pastel colors */
+    --neon-pink: 340 70% 55%;
+    --neon-cyan: 180 50% 50%;
+    --neon-violet: 280 50% 65%;
+    --neon-red: 0 70% 55%;
+    --neon-green: 150 50% 45%;
+
+    /* Soft glass effect */
+    --glass-bg: 0 0% 100%;
+    --glass-border: 340 30% 80%;
+
+    /* Gradient backgrounds */
+    --gradient-start: 340 30% 97%;
+    --gradient-end: 15 40% 95%;
+
+    /* Sidebar (light theme) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 340 60% 25%;
+    --sidebar-primary: 340 70% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 280 50% 70%;
+    --sidebar-accent-foreground: 280 60% 25%;
+    --sidebar-border: 340 20% 90%;
+    --sidebar-ring: 340 70% 50%;
+
+    /* Fonts - Friendlier for light mode */
     --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
-    --font-sans: Montserrat, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+    --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
   }
 }
 
@@ -101,34 +167,58 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-sans);
+    font-weight: 600;
   }
 
   code, .mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
 }
 
 @layer components {
-  /* Glass morphism panel */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     GLASS MORPHISM - Adapts to theme
+     ═══════════════════════════════════════════════════════════════════════════ */
   .glass-panel {
-    @apply bg-card/10 backdrop-blur-xl border border-glass-border/20 rounded-2xl;
+    @apply backdrop-blur-xl rounded-2xl;
+    background: hsl(var(--glass-bg) / 0.1);
+    border: 1px solid hsl(var(--glass-border) / 0.2);
     box-shadow: 
       0 0 30px -10px hsl(var(--primary) / 0.15),
       inset 0 1px 0 0 hsl(var(--foreground) / 0.05);
+    transition: all 0.3s ease;
   }
 
-  /* Neon glow effects */
-  .glow-cyan {
+  .light .glass-panel {
+    background: hsl(var(--glass-bg) / 0.8);
+    border: 1px solid hsl(var(--glass-border) / 0.3);
+    box-shadow: 
+      0 4px 20px -5px hsl(var(--primary) / 0.1),
+      0 8px 32px -8px hsl(0 0% 0% / 0.08);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NEON GLOW EFFECTS - Dark mode only
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .glow-pink {
     box-shadow: 
       0 0 20px hsl(var(--primary) / 0.4),
       0 0 40px hsl(var(--primary) / 0.2),
       0 0 60px hsl(var(--primary) / 0.1);
+  }
+
+  .glow-cyan {
+    box-shadow: 
+      0 0 20px hsl(var(--secondary) / 0.4),
+      0 0 40px hsl(var(--secondary) / 0.2),
+      0 0 60px hsl(var(--secondary) / 0.1);
   }
 
   .glow-violet {
@@ -145,12 +235,30 @@
       0 0 60px hsl(var(--destructive) / 0.1);
   }
 
-  /* Text glow */
-  .text-glow-cyan {
+  /* Light mode: Soft shadows instead of glows */
+  .light .glow-pink,
+  .light .glow-cyan,
+  .light .glow-violet {
+    box-shadow: 
+      0 4px 15px -3px hsl(var(--primary) / 0.15),
+      0 8px 25px -5px hsl(var(--primary) / 0.1);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     TEXT GLOW EFFECTS
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .text-glow-pink {
     text-shadow: 
       0 0 10px hsl(var(--primary) / 0.8),
       0 0 20px hsl(var(--primary) / 0.5),
       0 0 40px hsl(var(--primary) / 0.3);
+  }
+
+  .text-glow-cyan {
+    text-shadow: 
+      0 0 10px hsl(var(--secondary) / 0.8),
+      0 0 20px hsl(var(--secondary) / 0.5),
+      0 0 40px hsl(var(--secondary) / 0.3);
   }
 
   .text-glow-violet {
@@ -160,7 +268,16 @@
       0 0 40px hsl(var(--accent) / 0.3);
   }
 
-  /* Gradient borders */
+  /* Light mode: No text glow */
+  .light .text-glow-pink,
+  .light .text-glow-cyan,
+  .light .text-glow-violet {
+    text-shadow: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     GRADIENT BORDERS
+     ═══════════════════════════════════════════════════════════════════════════ */
   .gradient-border {
     position: relative;
   }
@@ -187,17 +304,20 @@
     mask-composite: exclude;
   }
 
-  /* Animated gradient background */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     ANIMATED GRADIENT BACKGROUND
+     ═══════════════════════════════════════════════════════════════════════════ */
   .animated-gradient {
     background: linear-gradient(
       -45deg,
-      hsl(var(--background)),
-      hsl(240 30% 10%),
-      hsl(260 30% 12%),
-      hsl(var(--background))
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-end)),
+      hsl(var(--gradient-start)),
+      hsl(var(--gradient-end))
     );
     background-size: 400% 400%;
     animation: gradient-shift 15s ease infinite;
+    transition: background 0.5s ease-in-out;
   }
 
   @keyframes gradient-shift {
@@ -206,7 +326,9 @@
     100% { background-position: 0% 50%; }
   }
 
-  /* Breathing animation */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     BREATHING ANIMATION
+     ═══════════════════════════════════════════════════════════════════════════ */
   .breathing {
     animation: breathe 4s ease-in-out infinite;
   }
@@ -216,7 +338,9 @@
     50% { opacity: 1; transform: scale(1.02); }
   }
 
-  /* Pulse glow */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     PULSE GLOW
+     ═══════════════════════════════════════════════════════════════════════════ */
   .pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }
@@ -235,7 +359,22 @@
     }
   }
 
-  /* Floating animation */
+  .light .pulse-glow {
+    animation: pulse-shadow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-shadow {
+    0%, 100% {
+      box-shadow: 0 4px 15px -3px hsl(var(--primary) / 0.15);
+    }
+    50% {
+      box-shadow: 0 8px 25px -5px hsl(var(--primary) / 0.25);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     FLOATING ANIMATION
+     ═══════════════════════════════════════════════════════════════════════════ */
   .floating {
     animation: float 6s ease-in-out infinite;
   }
@@ -245,7 +384,29 @@
     50% { transform: translateY(-10px); }
   }
 
-  /* Glitch effect */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     NEON FLICKER (Dark mode authenticity)
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .neon-flicker {
+    animation: neon-flicker 3s ease-in-out infinite;
+  }
+
+  @keyframes neon-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      opacity: 1;
+    }
+    20%, 24%, 55% {
+      opacity: 0.8;
+    }
+  }
+
+  .light .neon-flicker {
+    animation: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     GLITCH EFFECT
+     ═══════════════════════════════════════════════════════════════════════════ */
   .glitch {
     animation: glitch 0.3s ease-in-out infinite;
   }
@@ -258,7 +419,9 @@
     80% { transform: translate(2px, -2px); }
   }
 
-  /* Scanline effect */
+  /* ═══════════════════════════════════════════════════════════════════════════
+     SCANLINE EFFECT (Dark mode only)
+     ═══════════════════════════════════════════════════════════════════════════ */
   .scanlines::after {
     content: '';
     position: absolute;
@@ -273,7 +436,13 @@
     pointer-events: none;
   }
 
-  /* Custom scrollbar */
+  .light .scanlines::after {
+    display: none;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CUSTOM SCROLLBAR
+     ═══════════════════════════════════════════════════════════════════════════ */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -291,14 +460,82 @@
   ::-webkit-scrollbar-thumb:hover {
     background: hsl(var(--primary) / 0.5);
   }
+
+  /* ═══════════════════════════════════════════════════════════════════════════
+     CHAOS MODE - Random madness
+     ═══════════════════════════════════════════════════════════════════════════ */
+  .chaos-mode .glass-panel {
+    animation: chaos-jitter 0.5s ease-in-out infinite;
+  }
+
+  .chaos-mode .floating {
+    animation: chaos-float 2s ease-in-out infinite;
+  }
+
+  .chaos-mode .text-glow-pink,
+  .chaos-mode .text-glow-cyan {
+    animation: chaos-color-shift 1s ease-in-out infinite;
+  }
+
+  .chaos-mode .animated-gradient {
+    animation: gradient-shift 3s ease infinite, chaos-hue-rotate 5s linear infinite;
+  }
+
+  @keyframes chaos-jitter {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    25% { transform: translate(-2px, 1px) rotate(-0.5deg); }
+    50% { transform: translate(1px, -1px) rotate(0.5deg); }
+    75% { transform: translate(-1px, 2px) rotate(-0.3deg); }
+  }
+
+  @keyframes chaos-float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-15px) rotate(3deg); }
+    50% { transform: translateY(-5px) rotate(-2deg); }
+    75% { transform: translateY(-20px) rotate(1deg); }
+  }
+
+  @keyframes chaos-color-shift {
+    0%, 100% {
+      filter: hue-rotate(0deg);
+    }
+    50% {
+      filter: hue-rotate(30deg);
+    }
+  }
+
+  @keyframes chaos-hue-rotate {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+  }
+
+  /* Chaos mode random confetti trigger points */
+  .chaos-mode button:hover {
+    animation: chaos-button-shake 0.2s ease-in-out infinite;
+  }
+
+  @keyframes chaos-button-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
 }
 
 @layer utilities {
   .font-heading {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-sans);
+    font-weight: 600;
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
+  }
+
+  /* Theme transition utility */
+  .theme-transition {
+    transition: background-color 0.5s ease-in-out, 
+                color 0.5s ease-in-out,
+                border-color 0.5s ease-in-out,
+                box-shadow 0.5s ease-in-out;
   }
 }

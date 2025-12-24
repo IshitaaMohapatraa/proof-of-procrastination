@@ -2,27 +2,28 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends HTMLMotionProps<"div"> {
-  glowColor?: "cyan" | "violet" | "red";
+  glowColor?: "pink" | "cyan" | "violet" | "red";
   hoverable?: boolean;
 }
 
 export const GlassCard = ({
   children,
   className,
-  glowColor = "cyan",
+  glowColor = "pink",
   hoverable = true,
   ...props
 }: GlassCardProps) => {
   const glowClasses = {
-    cyan: "hover:shadow-[0_0_30px_hsl(185_100%_50%/0.3)]",
-    violet: "hover:shadow-[0_0_30px_hsl(260_70%_60%/0.3)]",
-    red: "hover:shadow-[0_0_30px_hsl(345_100%_50%/0.3)]",
+    pink: "hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)]",
+    cyan: "hover:shadow-[0_0_30px_hsl(var(--secondary)/0.3)]",
+    violet: "hover:shadow-[0_0_30px_hsl(var(--accent)/0.3)]",
+    red: "hover:shadow-[0_0_30px_hsl(var(--destructive)/0.3)]",
   };
 
   return (
     <motion.div
       className={cn(
-        "glass-panel p-6 transition-all duration-300",
+        "glass-panel p-6 transition-all duration-300 theme-transition",
         hoverable && glowClasses[glowColor],
         className
       )}

@@ -46,7 +46,7 @@ export const SplashScreen = () => {
       particleCount: 100,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#00f5ff', '#7f5af0', '#ff004c', '#50fa7b'],
+      colors: ['#ff6ec7', '#bb77ff', '#ff4d6d', '#00f5ff'],
     });
     
     setTimeout(() => {
@@ -55,11 +55,11 @@ export const SplashScreen = () => {
   };
 
   const quickLinks = [
-    { icon: Link2, label: "Chain Viewer", path: "/chain", color: "cyan" },
+    { icon: Link2, label: "Chain Viewer", path: "/chain", color: "pink" },
     { icon: Trophy, label: "Achievements", path: "/achievements", color: "violet" },
-    { icon: BarChart3, label: "Analytics", path: "/analytics", color: "cyan" },
+    { icon: BarChart3, label: "Analytics", path: "/analytics", color: "pink" },
     { icon: FileText, label: "Certificate", path: "/certificate", color: "violet" },
-    { icon: Sparkles, label: "Excuses", path: "/excuses", color: "cyan" },
+    { icon: Sparkles, label: "Excuses", path: "/excuses", color: "pink" },
     { icon: Award, label: "Profile", path: "/profile", color: "violet" },
   ];
 
@@ -81,13 +81,13 @@ export const SplashScreen = () => {
           transition={{ duration: 1.5, ease: "easeOut" }}
         >
           <motion.h1
-            className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold"
+            className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold neon-flicker"
             animate={logoReady ? { 
               scale: [1, 1.02, 1],
               textShadow: [
-                "0 0 20px hsl(185 100% 50% / 0.5)",
-                "0 0 40px hsl(185 100% 50% / 0.8)",
-                "0 0 20px hsl(185 100% 50% / 0.5)",
+                "0 0 20px hsl(var(--primary) / 0.5)",
+                "0 0 40px hsl(var(--primary) / 0.8)",
+                "0 0 20px hsl(var(--primary) / 0.5)",
               ]
             } : {}}
             transition={{ 
@@ -157,7 +157,7 @@ export const SplashScreen = () => {
                 <motion.div
                   whileHover={{ 
                     scale: 1.05,
-                    boxShadow: "0 0 40px hsl(185 100% 50% / 0.5)"
+                    boxShadow: "0 0 40px hsl(var(--primary) / 0.5)"
                   }}
                   whileTap={{ scale: 0.98 }}
                   className="relative"
@@ -203,7 +203,7 @@ export const SplashScreen = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-heading font-bold text-glow-cyan mb-4">
+            <h2 className="text-4xl font-heading font-bold text-glow-pink mb-4">
               Explore Your Procrastination
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
@@ -222,16 +222,16 @@ export const SplashScreen = () => {
               >
                 <GlassCard
                   hoverable
-                  glowColor={link.color as "cyan" | "violet"}
+                  glowColor={link.color as "pink" | "violet"}
                   className="cursor-pointer h-full"
                   onClick={() => navigate(user ? link.path : "/auth")}
                 >
                   <div className="flex items-center gap-4">
                     <div className={`p-3 rounded-xl ${
-                      link.color === "cyan" ? "bg-primary/20" : "bg-accent/20"
+                      link.color === "pink" ? "bg-primary/20" : "bg-accent/20"
                     }`}>
                       <link.icon className={`w-6 h-6 ${
-                        link.color === "cyan" ? "text-primary" : "text-accent"
+                        link.color === "pink" ? "text-primary" : "text-accent"
                       }`} />
                     </div>
                     <div>

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { useTheme } from "@/hooks/useTheme";
 import { 
   ArrowLeft, 
   Palette, 
@@ -11,9 +12,8 @@ import {
   Sparkles, 
   Info,
   Moon,
-  Zap,
-  Bell,
-  Eye
+  Sun,
+  Zap
 } from "lucide-react";
 
 interface ToggleProps {
@@ -21,13 +21,17 @@ interface ToggleProps {
   onToggle: () => void;
   label: string;
   description: string;
+  icon?: React.ReactNode;
 }
 
-const Toggle = ({ enabled, onToggle, label, description }: ToggleProps) => (
+const Toggle = ({ enabled, onToggle, label, description, icon }: ToggleProps) => (
   <div className="flex items-center justify-between py-4 border-b border-border/30 last:border-0">
-    <div>
-      <p className="font-medium">{label}</p>
-      <p className="text-sm text-muted-foreground">{description}</p>
+    <div className="flex items-center gap-3">
+      {icon && <div className="text-primary">{icon}</div>}
+      <div>
+        <p className="font-medium">{label}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
     </div>
     <motion.button
       onClick={onToggle}
@@ -37,7 +41,7 @@ const Toggle = ({ enabled, onToggle, label, description }: ToggleProps) => (
       whileTap={{ scale: 0.95 }}
     >
       <motion.div
-        className="absolute top-1 w-6 h-6 rounded-full bg-foreground"
+        className="absolute top-1 w-6 h-6 rounded-full bg-foreground dark:bg-background"
         animate={{ left: enabled ? "calc(100% - 28px)" : "4px" }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />
@@ -47,12 +51,12 @@ const Toggle = ({ enabled, onToggle, label, description }: ToggleProps) => (
 
 export const Settings = () => {
   const navigate = useNavigate();
+  const { theme, toggleTheme, chaosMode, toggleChaosMode } = useTheme();
   const [activeTab, setActiveTab] = useState("ui");
   
   // UI Settings
   const [extraNeon, setExtraNeon] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
   
   // Sound Settings
   const [soundEffects, setSoundEffects] = useState(true);
@@ -61,7 +65,6 @@ export const Settings = () => {
   // Chaos Settings
   const [judgmentalPopups, setJudgmentalPopups] = useState(true);
   const [randomRoasts, setRandomRoasts] = useState(true);
-  const [extremeMode, setExtremeMode] = useState(false);
 
   const tabs = [
     { id: "ui", label: "UI", icon: Palette },
@@ -96,7 +99,7 @@ export const Settings = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
-          <h1 className="text-4xl font-heading font-bold text-glow-cyan mb-2">
+          <h1 className="text-4xl font-heading font-bold text-glow-pink mb-2">
             Settings
           </h1>
           <p className="text-muted-foreground">
@@ -142,17 +145,54 @@ export const Settings = () => {
                 <Palette className="w-5 h-5 text-primary" />
                 <h3 className="text-lg font-heading font-semibold">UI Settings</h3>
               </div>
+              
+              {/* Theme Toggle - Main feature */}
+              <div className="flex items-center justify-between py-4 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                  <motion.div 
+                    className="text-primary"
+                    animate={{ rotate: theme === "dark" ? 0 : 180 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {theme === "dark" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                  </motion.div>
+                  <div>
+                    <p className="font-medium">
+                      {theme === "dark" ? "Dark Mode (Neon)" : "Light Mode (Pastel)"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {theme === "dark" 
+                        ? "Cyberpunk vibes with neon glows" 
+                        : "Soft dating app aesthetic"}
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={toggleTheme}
+                  className={`relative w-14 h-8 rounded-full transition-colors ${
+                    theme === "dark" ? "bg-primary" : "bg-secondary"
+                  }`}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 rounded-full bg-foreground dark:bg-background flex items-center justify-center"
+                    animate={{ left: theme === "dark" ? "4px" : "calc(100% - 28px)" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  >
+                    {theme === "dark" ? (
+                      <Moon className="w-3 h-3 text-primary" />
+                    ) : (
+                      <Sun className="w-3 h-3 text-secondary" />
+                    )}
+                  </motion.div>
+                </motion.button>
+              </div>
+
               <Toggle
                 enabled={extraNeon}
                 onToggle={() => setExtraNeon(!extraNeon)}
                 label="Extra Neon"
                 description="Maximum glow for maximum guilt"
-              />
-              <Toggle
-                enabled={darkMode}
-                onToggle={() => setDarkMode(!darkMode)}
-                label="Dark Mode"
-                description="Like your procrastination habits"
               />
               <Toggle
                 enabled={reducedMotion}
@@ -190,6 +230,42 @@ export const Settings = () => {
                 <Sparkles className="w-5 h-5 text-destructive" />
                 <h3 className="text-lg font-heading font-semibold">Chaos Mode</h3>
               </div>
+              
+              {/* Main Chaos Toggle */}
+              <div className="flex items-center justify-between py-4 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                  <motion.div 
+                    className="text-destructive"
+                    animate={chaosMode ? { 
+                      rotate: [0, 10, -10, 10, 0],
+                      scale: [1, 1.1, 1, 1.1, 1]
+                    } : {}}
+                    transition={{ duration: 0.5, repeat: chaosMode ? Infinity : 0, repeatDelay: 2 }}
+                  >
+                    <Zap className="w-5 h-5" />
+                  </motion.div>
+                  <div>
+                    <p className="font-medium">Enable Chaos Mode</p>
+                    <p className="text-sm text-muted-foreground">
+                      Randomize everything. Pure madness.
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={toggleChaosMode}
+                  className={`relative w-14 h-8 rounded-full transition-colors ${
+                    chaosMode ? "bg-destructive" : "bg-muted"
+                  }`}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 rounded-full bg-foreground dark:bg-background"
+                    animate={{ left: chaosMode ? "calc(100% - 28px)" : "4px" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
+
               <Toggle
                 enabled={judgmentalPopups}
                 onToggle={() => setJudgmentalPopups(!judgmentalPopups)}
@@ -202,26 +278,26 @@ export const Settings = () => {
                 label="Random Roasts"
                 description="AI-generated shade throughout the app"
               />
-              <Toggle
-                enabled={extremeMode}
-                onToggle={() => setExtremeMode(!extremeMode)}
-                label="Extreme Mode"
-                description="You're not ready for this"
-              />
               
-              {extremeMode && (
+              {chaosMode && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   className="mt-4 p-4 bg-destructive/20 rounded-xl border border-destructive/50"
                 >
-                  <p className="text-sm text-destructive text-center font-medium">
-                    ⚠️ Extreme Mode Activated ⚠️
+                  <motion.p 
+                    className="text-sm text-destructive text-center font-medium"
+                    animate={{ 
+                      x: [0, -2, 2, -2, 0],
+                    }}
+                    transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 1 }}
+                  >
+                    ⚠️ CHAOS MODE ACTIVE ⚠️
                     <br />
                     <span className="text-muted-foreground">
-                      You asked for this. No refunds.
+                      Good luck. You'll need it.
                     </span>
-                  </p>
+                  </motion.p>
                 </motion.div>
               )}
             </GlassCard>
