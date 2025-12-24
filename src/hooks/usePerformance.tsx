@@ -1,11 +1,17 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect } from "react";
 
 interface PerformanceContextType {
   performanceMode: boolean;
   setPerformanceMode: (enabled: boolean) => void;
   togglePerformanceMode: () => void;
   reducedMotion: boolean;
+  // Animation freeze tracking
+  hasPageAnimated: (pageKey: string) => boolean;
+  markPageAnimated: (pageKey: string) => void;
 }
+
+// Global set to track animated pages - persists across navigation
+const animatedPagesSet = new Set<string>();
 
 const PerformanceContext = createContext<PerformanceContextType | undefined>(undefined);
 
@@ -37,6 +43,15 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // Animation freeze tracking
+  const hasPageAnimated = useCallback((pageKey: string) => {
+    return animatedPagesSet.has(pageKey);
+  }, []);
+
+  const markPageAnimated = useCallback((pageKey: string) => {
+    animatedPagesSet.add(pageKey);
+  }, []);
+
   return (
     <PerformanceContext.Provider
       value={{
@@ -44,6 +59,8 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
         setPerformanceMode,
         togglePerformanceMode,
         reducedMotion: reducedMotion || performanceMode,
+        hasPageAnimated,
+        markPageAnimated,
       }}
     >
       {children}

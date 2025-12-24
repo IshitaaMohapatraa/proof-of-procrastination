@@ -2,26 +2,25 @@ import { memo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Home } from "lucide-react";
 
-interface PageHeaderProps {
+interface HomeButtonProps {
   className?: string;
 }
 
 /**
- * Simple, optimized page header with just a Home button
- * - No back button (removes browser history dependency)
- * - No animations (prevents lag on navigation)
- * - Uses replace: true for instant navigation
+ * Persistent Home button - appears on all screens except dashboard
+ * Uses controlled routing with replace: true for instant navigation
+ * No animations on click to prevent lag
  */
-export const PageHeader = memo(({ className = "" }: PageHeaderProps) => {
+export const HomeButton = memo(({ className = "" }: HomeButtonProps) => {
   const navigate = useNavigate();
 
-  const handleHome = useCallback(() => {
+  const handleClick = useCallback(() => {
     navigate("/dashboard", { replace: true });
   }, [navigate]);
 
   return (
     <button
-      onClick={handleHome}
+      onClick={handleClick}
       className={`
         fixed top-4 left-4 z-50
         w-12 h-12 rounded-full
@@ -41,4 +40,4 @@ export const PageHeader = memo(({ className = "" }: PageHeaderProps) => {
   );
 });
 
-PageHeader.displayName = "PageHeader";
+HomeButton.displayName = "HomeButton";

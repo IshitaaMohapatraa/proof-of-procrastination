@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
@@ -53,9 +53,21 @@ export const Dashboard = () => {
   const { chain, isLoading: chainLoading, validateChainIntegrity } = useProcrastinationChain();
   const { achievements, chainStats } = useAchievements();
   const { theme } = useTheme();
-  const { reducedMotion } = usePerformance();
+  const { reducedMotion, hasPageAnimated, markPageAnimated } = usePerformance();
   
-  // Memoize static values
+  // Track if initial animations have run - freeze after first mount
+  const hasAnimatedRef = useRef(hasPageAnimated("dashboard"));
+  const skipAnimations = hasAnimatedRef.current || reducedMotion;
+  
+  // Mark page as animated after first render
+  useEffect(() => {
+    if (!hasAnimatedRef.current) {
+      markPageAnimated("dashboard");
+      hasAnimatedRef.current = true;
+    }
+  }, [markPageAnimated]);
+  
+  // Memoize static values - only compute once
   const currentRoast = useMemo(() => roasts[Math.floor(Math.random() * roasts.length)], []);
   
   const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
@@ -177,12 +189,7 @@ export const Dashboard = () => {
   if (authLoading || chainLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-gradient">
-        <motion.div
-          animate={reducedMotion ? {} : { rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        >
-          <Loader2 className="w-8 h-8 text-primary" />
-        </motion.div>
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -191,21 +198,15 @@ export const Dashboard = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
       
-      {/* Navigation */}
-      <motion.nav 
-        className="fixed top-0 left-0 right-0 z-50 p-4"
-        initial={reducedMotion ? {} : { y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
+      {/* Navigation - No entrance animation, just static */}
+      <nav className="fixed top-0 left-0 right-0 z-50 p-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <motion.h2 
-            className="font-heading font-bold text-xl text-primary cursor-pointer"
-            whileHover={reducedMotion ? {} : { scale: 1.05 }}
+          <h2 
+            className="font-heading font-bold text-xl text-primary cursor-pointer hover:scale-105 transition-transform"
             onClick={() => navigate("/")}
           >
             PoP™
-          </motion.h2>
+          </h2>
           <div className="flex gap-4">
             <NeonButton 
               variant="ghost" 
@@ -231,25 +232,16 @@ export const Dashboard = () => {
             </NeonButton>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Main content */}
       <main className="relative z-10 pt-24 pb-16 px-4 max-w-7xl mx-auto">
-        {/* Hero - Time Wasted Counter */}
-        <motion.section 
-          className="text-center mb-16"
-          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <motion.div
-            className="inline-flex items-center gap-2 text-muted-foreground mb-4"
-            animate={reducedMotion ? {} : { opacity: [0.7, 1, 0.7] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          >
+        {/* Hero - Time Wasted Counter - Static after first visit */}
+        <section className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 text-muted-foreground mb-4">
             <Clock className="w-5 h-5" />
             <span className="uppercase tracking-widest text-sm">Total Time Wasted</span>
-          </motion.div>
+          </div>
 
           <div className="flex justify-center items-baseline gap-2 mb-4">
             <div className="flex items-baseline gap-1">
@@ -275,66 +267,35 @@ export const Dashboard = () => {
             </div>
           </div>
 
-          <motion.p 
-            className="text-lg text-muted-foreground italic"
-            initial={reducedMotion ? {} : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
+          <p className="text-lg text-muted-foreground italic">
             "{currentRoast}"
-          </motion.p>
-        </motion.section>
+          </p>
+        </section>
 
-        {/* Main Grid */}
+        {/* Main Grid - No entrance animations */}
         <div className="grid lg:grid-cols-3 gap-6 mb-16">
           {/* Procrastination Gauge */}
-          <motion.div
-            initial={reducedMotion ? {} : { opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="lg:col-span-1"
-          >
+          <div className="lg:col-span-1">
             <GlassCard className="h-full flex items-center justify-center">
               <ProcrastinationGauge score={procrastinationScore} />
             </GlassCard>
-          </motion.div>
+          </div>
 
           {/* Main CTA and Stats */}
-          <motion.div
-            initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="lg:col-span-2 space-y-6"
-          >
+          <div className="lg:col-span-2 space-y-6">
             {/* Log Procrastination CTA */}
             <GlassCard className="text-center py-10">
-              <motion.div
-                animate={reducedMotion ? {} : { 
-                  boxShadow: [
-                    "0 0 20px hsl(185 100% 50% / 0.3)",
-                    "0 0 40px hsl(185 100% 50% / 0.4)",
-                    "0 0 20px hsl(185 100% 50% / 0.3)",
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="inline-block rounded-2xl"
-              >
+              <div className="inline-block rounded-2xl pulse-glow">
                 <NeonButton 
                   size="xl" 
                   onClick={handleLogClick}
                   className="group"
                 >
-                  <Zap className="w-6 h-6 mr-3 group-hover:animate-pulse" />
+                  <Zap className="w-6 h-6 mr-3" />
                   Log Procrastination
-                  <motion.span
-                    className="ml-3 opacity-50"
-                    animate={reducedMotion ? {} : { x: [0, 5, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    →
-                  </motion.span>
+                  <span className="ml-3 opacity-50">→</span>
                 </NeonButton>
-              </motion.div>
+              </div>
               <p className="text-sm text-muted-foreground mt-4">
                 Add your latest avoidance to the immutable chain
               </p>
@@ -360,16 +321,11 @@ export const Dashboard = () => {
                 onClick={handleSessionsClick}
               />
             </div>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Latest Block Hash - Interactive */}
-        <motion.section
-          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mb-16"
-        >
+        {/* Latest Block Hash - Static layout */}
+        <section className="mb-16">
           <InteractiveStatCard
             icon={<Hash className={`w-6 h-6 ${isDark ? 'text-secondary' : 'text-secondary'}`} />}
             value={
@@ -388,34 +344,16 @@ export const Dashboard = () => {
                 <code className="text-xs font-mono text-muted-foreground truncate flex-1">
                   {latestHash}
                 </code>
-                <motion.button
+                <button
                   onClick={handleCopyHash}
-                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-muted/50' : 'hover:bg-muted/70'} transition-colors`}
-                  whileHover={reducedMotion ? {} : { scale: 1.1 }}
-                  whileTap={reducedMotion ? {} : { scale: 0.9 }}
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-muted/50' : 'hover:bg-muted/70'} transition-colors hover:scale-110 active:scale-95`}
                 >
-                  <AnimatePresence mode="wait">
-                    {hashCopied ? (
-                      <motion.div
-                        key="check"
-                        initial={reducedMotion ? {} : { scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={reducedMotion ? {} : { scale: 0 }}
-                      >
-                        <Check className="w-4 h-4 text-neon-green" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="copy"
-                        initial={reducedMotion ? {} : { scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={reducedMotion ? {} : { scale: 0 }}
-                      >
-                        <Copy className="w-4 h-4 text-muted-foreground" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
+                  {hashCopied ? (
+                    <Check className="w-4 h-4 text-neon-green" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
               </div>
 
               {/* Chain integrity */}
@@ -426,12 +364,7 @@ export const Dashboard = () => {
               }`}>
                 {chainIntegrity.valid ? (
                   <>
-                    <motion.div
-                      animate={reducedMotion ? {} : { scale: [1, 1.2, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Check className="w-5 h-5 text-neon-green" />
-                    </motion.div>
+                    <Check className="w-5 h-5 text-neon-green" />
                     <span className={`text-sm ${isDark ? 'text-neon-green' : 'text-green-700'}`}>
                       Chain Verified • All {chain.length} blocks intact
                     </span>
@@ -447,29 +380,20 @@ export const Dashboard = () => {
               </div>
 
               {/* Explanation panel */}
-              <motion.div
-                className={`p-3 rounded-xl ${isDark ? 'bg-primary/5 border border-primary/20' : 'bg-primary/5 border border-primary/10'}`}
-                initial={reducedMotion ? {} : { opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                transition={{ delay: 0.3 }}
-              >
+              <div className={`p-3 rounded-xl ${isDark ? 'bg-primary/5 border border-primary/20' : 'bg-primary/5 border border-primary/10'}`}>
                 <p className="text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground">SHA-256 Hash:</span> A cryptographic fingerprint of your session data.
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   <span className="font-semibold text-foreground">Prev Hash:</span> Links to the previous session, ensuring chain integrity.
                 </p>
-              </motion.div>
+              </div>
             </div>
           </InteractiveStatCard>
-        </motion.section>
+        </section>
 
-        {/* Achievements */}
-        <motion.section
-          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-        >
+        {/* Achievements - Static layout */}
+        <section>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Trophy className="w-6 h-6 text-primary" />
@@ -487,13 +411,8 @@ export const Dashboard = () => {
 
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
             {unlockedAchievements.length > 0 ? (
-              unlockedAchievements.map((achievement, index) => (
-                <motion.div
-                  key={achievement.code}
-                  initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + index * 0.1 }}
-                >
+              unlockedAchievements.map((achievement) => (
+                <div key={achievement.code}>
                   <GlassCard 
                     className="min-w-[140px] text-center"
                     hoverable
@@ -502,7 +421,7 @@ export const Dashboard = () => {
                     <div className="text-4xl mb-2">{achievement.icon}</div>
                     <p className="text-sm font-medium">{achievement.name}</p>
                   </GlassCard>
-                </motion.div>
+                </div>
               ))
             ) : (
               <GlassCard className="w-full text-center py-8">
@@ -511,7 +430,7 @@ export const Dashboard = () => {
               </GlassCard>
             )}
           </div>
-        </motion.section>
+        </section>
       </main>
 
       {/* Lazy-loaded Modals */}
