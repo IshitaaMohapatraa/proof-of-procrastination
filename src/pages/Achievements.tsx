@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
@@ -20,6 +20,7 @@ export const Achievements = () => {
     code: string;
     name: string;
     icon: string;
+    unlockedAt?: string;
   } | null>(null);
 
   // Redirect if not logged in
@@ -32,29 +33,56 @@ export const Achievements = () => {
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
   // Calculate top excuses from chain
-  const excuseCounts = chain.reduce((acc, block) => {
-    acc[block.excuse] = (acc[block.excuse] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const topExcuses = useMemo(() => {
+    const excuseCounts = chain.reduce((acc, block) => {
+      acc[block.excuse] = (acc[block.excuse] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-  const topExcuses = Object.entries(excuseCounts)
-    .map(([excuse, count]) => ({ excuse, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 3);
+    return Object.entries(excuseCounts)
+      .map(([excuse, count]) => ({ excuse, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [chain]);
+
+  // Calculate mood stats from chain
+  const moodStats = useMemo(() => {
+    if (chain.length === 0) return [];
+    
+    const moodCounts = chain.reduce((acc, block) => {
+      acc[block.mood] = (acc[block.mood] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const total = chain.length;
+    return Object.entries(moodCounts)
+      .map(([mood, count]) => ({
+        mood,
+        count,
+        percentage: Math.round((count / total) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [chain]);
 
   // Get top activity
-  const topActivity = Object.entries(chainStats.activityCounts)
-    .sort((a, b) => b[1] - a[1])[0];
+  const topActivity = useMemo(() => {
+    const entries = Object.entries(chainStats.activityCounts);
+    if (entries.length === 0) return null;
+    const sorted = entries.sort((a, b) => b[1] - a[1]);
+    return { name: sorted[0][0], count: sorted[0][1] };
+  }, [chainStats.activityCounts]);
 
   // Get badges for modal
-  const unlockedBadges = achievements
-    .filter(a => a.unlocked)
-    .map(a => ({
-      code: a.code,
-      name: a.name,
-      icon: a.icon,
-      unlockedAt: a.unlockedAt,
-    }));
+  const unlockedBadges = useMemo(() => {
+    return achievements
+      .filter(a => a.unlocked)
+      .map(a => ({
+        code: a.code,
+        name: a.name,
+        icon: a.icon,
+        unlockedAt: a.unlockedAt,
+      }));
+  }, [achievements]);
 
   if (authLoading || isLoading) {
     return (
@@ -125,6 +153,7 @@ export const Achievements = () => {
                   code: achievement.code,
                   name: achievement.name,
                   icon: achievement.icon,
+                  unlockedAt: achievement.unlockedAt,
                 })}
               />
             </motion.div>
@@ -149,11 +178,13 @@ export const Achievements = () => {
         achievementName={selectedAchievement?.name || ""}
         achievementIcon={selectedAchievement?.icon || "🏆"}
         totalMinutes={chainStats.totalMinutes}
-        topActivity={topActivity ? { name: topActivity[0], count: topActivity[1] } : null}
+        topActivity={topActivity}
         topExcuses={topExcuses}
         badges={unlockedBadges}
         longestSession={chainStats.longestSession}
         totalSessions={chainStats.totalSessions}
+        unlockedAt={selectedAchievement?.unlockedAt}
+        moodStats={moodStats}
       />
     </div>
   );
