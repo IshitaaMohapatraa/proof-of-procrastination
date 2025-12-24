@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -8,9 +8,11 @@ import { ProcrastinationGauge } from "@/components/ui/ProcrastinationGauge";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { HashDisplay } from "@/components/ui/HashDisplay";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { InteractiveStatCard } from "@/components/ui/InteractiveStatCard";
 import { useAuth } from "@/hooks/useAuth";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useTheme } from "@/hooks/useTheme";
 import { 
   Clock, 
   Trophy, 
@@ -21,7 +23,11 @@ import {
   Settings,
   Zap,
   LogOut,
-  Loader2
+  Loader2,
+  Hash,
+  Copy,
+  Check,
+  AlertTriangle
 } from "lucide-react";
 
 const roasts = [
@@ -32,15 +38,25 @@ const roasts = [
   "Productivity gurus hate this one trick.",
 ];
 
+const TOOLTIPS = {
+  latestHash: "This is a SHA-256 hash of your latest procrastination session. It's a cryptographic fingerprint that ensures your procrastination history is immutable and tamper-proof. Each block links to the previous one!",
+  chainLength: "This is the total number of procrastination blocks you've created. Each block represents a logged session, linked cryptographically to form an unbreakable chain of avoidance.",
+  totalSessions: "Total sessions logged. Each session contains your activity type, mood, duration, and excuse - all linked together cryptographically to prove your procrastination prowess!",
+};
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut, loading: authLoading } = useAuth();
   const { chain, isLoading: chainLoading, validateChainIntegrity } = useProcrastinationChain();
   const { achievements, chainStats } = useAchievements();
+  const { theme } = useTheme();
   
   const [currentRoast] = useState(roasts[Math.floor(Math.random() * roasts.length)]);
   const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
   const [timeWasted, setTimeWasted] = useState(0);
+  const [hashCopied, setHashCopied] = useState(false);
+
+  const isDark = theme === 'dark';
 
   // Redirect if not logged in
   useEffect(() => {
@@ -68,7 +84,7 @@ export const Dashboard = () => {
     if (chain.length > 0) {
       validateChainIntegrity().then(setChainIntegrity);
     }
-  }, [chain]);
+  }, [chain, validateChainIntegrity]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -78,11 +94,32 @@ export const Dashboard = () => {
 
   const time = formatTime(timeWasted);
   const latestHash = chain.length > 0 ? chain[chain.length - 1].current_hash : "0".repeat(64);
+  const shortHash = `0x${latestHash.substring(0, 6)}...${latestHash.substring(latestHash.length - 4)}`;
   const unlockedAchievements = achievements.filter((a) => a.unlocked).slice(0, 5);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleCopyHash = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(latestHash);
+    setHashCopied(true);
+    setTimeout(() => setHashCopied(false), 2000);
+  };
+
+  const handleHashClick = () => {
+    // Navigate to chain viewer with highlight on latest block
+    navigate("/chain", { state: { highlightLatest: true } });
+  };
+
+  const handleChainLengthClick = () => {
+    navigate("/chain", { state: { scrollToTop: true } });
+  };
+
+  const handleSessionsClick = () => {
+    navigate("/log", { state: { showLastSession: true } });
   };
 
   if (authLoading || chainLoading) {
@@ -251,57 +288,128 @@ export const Dashboard = () => {
               </p>
             </GlassCard>
 
-            {/* Quick Stats */}
+            {/* Interactive Quick Stats */}
             <div className="grid md:grid-cols-2 gap-4">
-              <GlassCard hoverable glowColor="violet" onClick={() => navigate("/chain")}>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-accent/20">
-                    <Link2 className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-heading font-bold">{chain.length}</p>
-                    <p className="text-sm text-muted-foreground">Chain Length</p>
-                  </div>
-                </div>
-              </GlassCard>
+              <InteractiveStatCard
+                icon={<Link2 className="w-6 h-6 text-accent" />}
+                value={chain.length}
+                label="Chain Length"
+                tooltip={TOOLTIPS.chainLength}
+                glowColor="violet"
+                onClick={handleChainLengthClick}
+              />
               
-              <GlassCard hoverable>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/20">
-                    <Timer className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-heading font-bold">{chainStats.totalSessions}</p>
-                    <p className="text-sm text-muted-foreground">Total Sessions</p>
-                  </div>
-                </div>
-              </GlassCard>
+              <InteractiveStatCard
+                icon={<Timer className="w-6 h-6 text-primary" />}
+                value={chainStats.totalSessions}
+                label="Total Sessions"
+                tooltip={TOOLTIPS.totalSessions}
+                glowColor="pink"
+                onClick={handleSessionsClick}
+              />
             </div>
           </motion.div>
         </div>
 
-        {/* Latest Block Hash */}
+        {/* Latest Block Hash - Interactive */}
         <motion.section
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
           className="mb-16"
         >
-          <GlassCard>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-heading font-semibold mb-1">Latest Block Hash</h3>
-                <p className="text-sm text-muted-foreground">Cryptographically verified laziness</p>
+          <InteractiveStatCard
+            icon={<Hash className={`w-6 h-6 ${isDark ? 'text-secondary' : 'text-secondary'}`} />}
+            value={
+              <span className={`font-mono text-lg ${isDark ? 'text-glow-pink text-primary' : 'text-primary'}`}>
+                {shortHash}
+              </span>
+            }
+            label="Latest Block Hash"
+            tooltip={TOOLTIPS.latestHash}
+            glowColor="cyan"
+            onClick={handleHashClick}
+          >
+            <div className="mt-4 space-y-3">
+              {/* Full hash display */}
+              <div className={`p-3 rounded-xl ${isDark ? 'bg-muted/20' : 'bg-muted/40'} flex items-center justify-between gap-3`}>
+                <code className="text-xs font-mono text-muted-foreground truncate flex-1">
+                  {latestHash}
+                </code>
+                <motion.button
+                  onClick={handleCopyHash}
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-muted/50' : 'hover:bg-muted/70'} transition-colors`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <AnimatePresence mode="wait">
+                    {hashCopied ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                      >
+                        <Check className="w-4 h-4 text-neon-green" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="copy"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                      >
+                        <Copy className="w-4 h-4 text-muted-foreground" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
               </div>
-              <HashDisplay hash={latestHash} />
+
+              {/* Chain integrity */}
+              <div className={`flex items-center gap-3 p-3 rounded-xl ${
+                chainIntegrity.valid 
+                  ? isDark ? 'bg-neon-green/10 border border-neon-green/30' : 'bg-green-50 border border-green-200'
+                  : isDark ? 'bg-destructive/10 border border-destructive/30' : 'bg-red-50 border border-red-200'
+              }`}>
+                {chainIntegrity.valid ? (
+                  <>
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Check className="w-5 h-5 text-neon-green" />
+                    </motion.div>
+                    <span className={`text-sm ${isDark ? 'text-neon-green' : 'text-green-700'}`}>
+                      Chain Verified • All {chain.length} blocks intact
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-5 h-5 text-destructive" />
+                    <span className={`text-sm ${isDark ? 'text-destructive' : 'text-red-700'}`}>
+                      Chain Broken at Block #{chainIntegrity.broken_at}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Explanation panel */}
+              <motion.div
+                className={`p-3 rounded-xl ${isDark ? 'bg-primary/5 border border-primary/20' : 'bg-primary/5 border border-primary/10'}`}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                transition={{ delay: 0.3 }}
+              >
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-semibold text-foreground">SHA-256 Hash:</span> A cryptographic fingerprint of your session data.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <span className="font-semibold text-foreground">Prev Hash:</span> Links to the previous session, ensuring chain integrity.
+                </p>
+              </motion.div>
             </div>
-            <ProgressBar 
-              value={chainIntegrity.valid ? 100 : 50} 
-              label={chainIntegrity.valid ? "Chain Verified ✓" : `Chain Broken at Block #${chainIntegrity.broken_at}`}
-              variant={chainIntegrity.valid ? "cyan" : "gradient"}
-              className="mt-4"
-            />
-          </GlassCard>
+          </InteractiveStatCard>
         </motion.section>
 
         {/* Achievements */}
