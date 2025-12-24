@@ -100,7 +100,7 @@ export const Profile = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      <PageHeader backPath="/dashboard" showHome={false} />
+      <PageHeader />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-4xl mx-auto">
         {/* Header */}

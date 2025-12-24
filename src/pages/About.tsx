@@ -57,7 +57,7 @@ export const About = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      <PageHeader backPath="/dashboard" showHome={false} />
+      <PageHeader />
 
       {/* Easter Egg Popup */}
       {easterEggTriggered && (
