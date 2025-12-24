@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { useTheme } from "@/hooks/useTheme";
+import { usePerformance } from "@/hooks/usePerformance";
 import { 
   ArrowLeft, 
   Palette, 
@@ -13,7 +14,8 @@ import {
   Info,
   Moon,
   Sun,
-  Zap
+  Zap,
+  Gauge
 } from "lucide-react";
 
 interface ToggleProps {
@@ -52,11 +54,11 @@ const Toggle = ({ enabled, onToggle, label, description, icon }: ToggleProps) =>
 export const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme, chaosMode, toggleChaosMode } = useTheme();
+  const { performanceMode, togglePerformanceMode } = usePerformance();
   const [activeTab, setActiveTab] = useState("ui");
   
   // UI Settings
   const [extraNeon, setExtraNeon] = useState(true);
-  const [reducedMotion, setReducedMotion] = useState(false);
   
   // Sound Settings
   const [soundEffects, setSoundEffects] = useState(true);
@@ -75,7 +77,7 @@ export const Settings = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       {/* Back button */}
       <motion.div
@@ -194,12 +196,34 @@ export const Settings = () => {
                 label="Extra Neon"
                 description="Maximum glow for maximum guilt"
               />
-              <Toggle
-                enabled={reducedMotion}
-                onToggle={() => setReducedMotion(!reducedMotion)}
-                label="Reduced Motion (Coward Mode)"
-                description="For the faint of heart"
-              />
+              
+              {/* Performance Mode Toggle */}
+              <div className="flex items-center justify-between py-4 border-b border-border/30">
+                <div className="flex items-center gap-3">
+                  <div className="text-accent">
+                    <Gauge className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Performance Mode</p>
+                    <p className="text-sm text-muted-foreground">
+                      Disables heavy animations for smoother experience
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  onClick={togglePerformanceMode}
+                  className={`relative w-14 h-8 rounded-full transition-colors ${
+                    performanceMode ? "bg-accent" : "bg-muted"
+                  }`}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 rounded-full bg-foreground dark:bg-background"
+                    animate={{ left: performanceMode ? "calc(100% - 28px)" : "4px" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </motion.button>
+              </div>
             </GlassCard>
           )}
 

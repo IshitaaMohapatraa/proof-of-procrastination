@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
+import { usePerformance } from "@/hooks/usePerformance";
 
 interface ConfettiButtonProps {
   children: React.ReactNode;
@@ -7,7 +8,9 @@ interface ConfettiButtonProps {
   className?: string;
 }
 
-export const triggerConfetti = () => {
+export const triggerConfetti = (performanceMode = false) => {
+  if (performanceMode) return;
+  
   confetti({
     particleCount: 100,
     spread: 70,
@@ -17,8 +20,10 @@ export const triggerConfetti = () => {
 };
 
 export const ConfettiButton = ({ children, onClick, className }: ConfettiButtonProps) => {
+  const { performanceMode } = usePerformance();
+  
   const handleClick = () => {
-    triggerConfetti();
+    triggerConfetti(performanceMode);
     onClick?.();
   };
 
@@ -26,8 +31,8 @@ export const ConfettiButton = ({ children, onClick, className }: ConfettiButtonP
     <motion.button
       onClick={handleClick}
       className={className}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={performanceMode ? {} : { scale: 1.05 }}
+      whileTap={performanceMode ? {} : { scale: 0.95 }}
     >
       {children}
     </motion.button>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useTheme } from '@/hooks/useTheme';
+import { usePerformance } from '@/hooks/usePerformance';
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter';
 import { X, Download, Share2, Trophy, Clock, Flame, MessageCircle, Calendar, BarChart3 } from 'lucide-react';
 import { NeonButton } from './NeonButton';
@@ -91,6 +92,7 @@ export function WrappedModal({
   moodStats = [],
 }: WrappedModalProps) {
   const { theme } = useTheme();
+  const { performanceMode } = usePerformance();
   const cardRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const isDark = theme === 'dark';
@@ -134,6 +136,9 @@ export function WrappedModal({
       setTimeout(() => setSlothReaction('dance'), 1500);
       setTimeout(() => setSlothReaction('idle'), 4000);
 
+      // Skip confetti in performance mode
+      if (performanceMode) return;
+
       const duration = 3000;
       const animationEnd = Date.now() + duration;
       const colors = isDark 
@@ -162,7 +167,7 @@ export function WrappedModal({
 
       return () => clearInterval(interval);
     }
-  }, [isOpen, isDark]);
+  }, [isOpen, isDark, performanceMode]);
 
   const handleDownload = async () => {
     if (!cardRef.current) return;
@@ -178,11 +183,13 @@ export function WrappedModal({
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      if (!performanceMode) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      }
     } catch (error) {
       console.error('Failed to generate image:', error);
     }

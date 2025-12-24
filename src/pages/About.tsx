@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { SlothMascot } from "@/components/ui/SlothMascot";
@@ -43,19 +43,19 @@ export const About = () => {
     }
   }, [clickCount]);
 
-  const nextFact = () => {
+  const nextFact = useCallback(() => {
     setCurrentFact((prev) => (prev + 1) % slothFacts.length);
     setClickCount(prev => prev + 1);
-  };
+  }, []);
 
-  const triggerEasterEgg = (egg: typeof easterEggs[0]) => {
+  const triggerEasterEgg = useCallback((egg: typeof easterEggs[0]) => {
     setEasterEggTriggered(egg.message);
     setTimeout(() => setEasterEggTriggered(null), 2000);
-  };
+  }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       <motion.div
         className="fixed top-4 left-4 z-50"
