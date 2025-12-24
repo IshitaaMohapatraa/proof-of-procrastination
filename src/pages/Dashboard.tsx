@@ -6,9 +6,9 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { ProcrastinationGauge } from "@/components/ui/ProcrastinationGauge";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
-import { HashDisplay } from "@/components/ui/HashDisplay";
-import { ProgressBar } from "@/components/ui/ProgressBar";
 import { InteractiveStatCard } from "@/components/ui/InteractiveStatCard";
+import { ChainExplainerModal } from "@/components/ui/ChainExplainerModal";
+import { SessionExplainerModal } from "@/components/ui/SessionExplainerModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -55,7 +55,8 @@ export const Dashboard = () => {
   const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
   const [timeWasted, setTimeWasted] = useState(0);
   const [hashCopied, setHashCopied] = useState(false);
-
+  const [showChainModal, setShowChainModal] = useState(false);
+  const [showSessionModal, setShowSessionModal] = useState(false);
   const isDark = theme === 'dark';
 
   // Redirect if not logged in
@@ -115,12 +116,20 @@ export const Dashboard = () => {
   };
 
   const handleChainLengthClick = () => {
-    navigate("/chain", { state: { scrollToTop: true } });
+    setShowChainModal(true);
   };
 
   const handleSessionsClick = () => {
-    navigate("/log", { state: { showLastSession: true } });
+    setShowSessionModal(true);
   };
+
+  // Get last session for modal
+  const lastSession = chain.length > 0 ? {
+    activity: chain[chain.length - 1].activity_type,
+    duration: chain[chain.length - 1].duration_minutes,
+    mood: chain[chain.length - 1].mood,
+    excuse: chain[chain.length - 1].excuse,
+  } : null;
 
   if (authLoading || chainLoading) {
     return (
@@ -465,6 +474,23 @@ export const Dashboard = () => {
 
       {/* Bottom gradient */}
       <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none z-40" />
+
+      {/* Modals */}
+      <ChainExplainerModal
+        isOpen={showChainModal}
+        onClose={() => setShowChainModal(false)}
+        chainLength={chain.length}
+        onViewChain={() => navigate("/chain", { state: { scrollToTop: true } })}
+      />
+
+      <SessionExplainerModal
+        isOpen={showSessionModal}
+        onClose={() => setShowSessionModal(false)}
+        totalSessions={chainStats.totalSessions}
+        lastSession={lastSession}
+        onLogNew={() => navigate("/log")}
+        onViewLast={() => navigate("/log", { state: { showLastSession: true } })}
+      />
     </div>
   );
 };
