@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { AchievementWrappedCard } from "@/components/ui/AchievementWrappedCard";
 import { WrappedModal } from "@/components/ui/WrappedModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { usePerformance } from "@/hooks/usePerformance";
-import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 
 export const Achievements = () => {
   const navigate = useNavigate();
@@ -118,21 +119,7 @@ export const Achievements = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      {/* Back button */}
-      <motion.div
-        className="fixed top-4 left-4 z-50"
-        initial={reducedMotion ? {} : { opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
-        <NeonButton 
-          variant="ghost" 
-          size="sm"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </NeonButton>
-      </motion.div>
+      <PageHeader backPath="/dashboard" showHome={false} />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-4xl mx-auto">
         <motion.div
