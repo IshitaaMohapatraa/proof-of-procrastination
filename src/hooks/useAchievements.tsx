@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useProcrastinationChain } from "./useProcrastinationChain";
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback, useRef } from "react";
 
 export interface Achievement {
   id: string;
@@ -123,7 +123,7 @@ const achievementDefinitions: AchievementDefinition[] = [
     description: "???", 
     icon: "❓", 
     rarity: "Secret",
-    check: () => false, // Secret achievement, manually unlocked
+    check: () => false,
   },
 ];
 
@@ -131,6 +131,7 @@ export function useAchievements() {
   const { user } = useAuth();
   const { chain } = useProcrastinationChain();
   const queryClient = useQueryClient();
+  const lastCheckedLength = useRef(0);
 
   // Fetch user's unlocked achievements
   const achievementsQuery = useQuery({
@@ -147,6 +148,7 @@ export function useAchievements() {
       return data as Achievement[];
     },
     enabled: !!user,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
   // Unlock achievement mutation
@@ -163,7 +165,7 @@ export function useAchievements() {
         .select()
         .single();
 
-      if (error && error.code !== "23505") throw error; // Ignore duplicate key errors
+      if (error && error.code !== "23505") throw error;
       return data;
     },
     onSuccess: () => {
@@ -171,8 +173,8 @@ export function useAchievements() {
     },
   });
 
-  // Calculate chain stats
-  const chainStats: ChainStats = {
+  // Memoize chain stats calculation
+  const chainStats: ChainStats = useMemo(() => ({
     totalSessions: chain.length,
     totalMinutes: chain.reduce((sum, block) => sum + block.duration_minutes, 0),
     longestSession: chain.length > 0 ? Math.max(...chain.map((b) => b.duration_minutes)) : 0,
@@ -181,11 +183,18 @@ export function useAchievements() {
       acc[block.activity_type] = (acc[block.activity_type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
-  };
+  }), [chain]);
 
-  // Check and unlock new achievements
+  // Memoize unlock achievement callback
+  const unlockAchievement = useCallback(
+    (code: string) => unlockMutation.mutateAsync(code),
+    [unlockMutation]
+  );
+
+  // Check and unlock new achievements - only when chain length changes
   useEffect(() => {
-    if (!user || !achievementsQuery.data) return;
+    if (!user || !achievementsQuery.data || chain.length === lastCheckedLength.current) return;
+    lastCheckedLength.current = chain.length;
 
     const unlockedCodes = new Set(achievementsQuery.data.map((a) => a.badge_code));
 
@@ -194,20 +203,23 @@ export function useAchievements() {
         unlockMutation.mutate(def.code);
       }
     });
-  }, [chain, user, achievementsQuery.data]);
+  }, [chain.length, user, achievementsQuery.data, chainStats, unlockMutation]);
 
-  // Get all achievements with unlock status
-  const allAchievements = achievementDefinitions.map((def) => ({
-    ...def,
-    unlocked: achievementsQuery.data?.some((a) => a.badge_code === def.code) || false,
-    unlockedAt: achievementsQuery.data?.find((a) => a.badge_code === def.code)?.unlocked_at,
-  }));
+  // Memoize all achievements with unlock status
+  const allAchievements = useMemo(() => 
+    achievementDefinitions.map((def) => ({
+      ...def,
+      unlocked: achievementsQuery.data?.some((a) => a.badge_code === def.code) || false,
+      unlockedAt: achievementsQuery.data?.find((a) => a.badge_code === def.code)?.unlocked_at,
+    })),
+    [achievementsQuery.data]
+  );
 
   return {
     achievements: allAchievements,
     unlockedAchievements: achievementsQuery.data || [],
     isLoading: achievementsQuery.isLoading,
     chainStats,
-    unlockAchievement: unlockMutation.mutateAsync,
+    unlockAchievement,
   };
 }

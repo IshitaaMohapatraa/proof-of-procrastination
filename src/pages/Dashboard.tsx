@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { ProcrastinationGauge } from "@/components/ui/ProcrastinationGauge";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { InteractiveStatCard } from "@/components/ui/InteractiveStatCard";
-import { ChainExplainerModal } from "@/components/ui/ChainExplainerModal";
-import { SessionExplainerModal } from "@/components/ui/SessionExplainerModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useTheme } from "@/hooks/useTheme";
+import { usePerformance } from "@/hooks/usePerformance";
 import { 
   Clock, 
   Trophy, 
@@ -29,6 +28,10 @@ import {
   Check,
   AlertTriangle
 } from "lucide-react";
+
+// Lazy load modals
+const ChainExplainerModal = lazy(() => import("@/components/ui/ChainExplainerModal").then(m => ({ default: m.ChainExplainerModal })));
+const SessionExplainerModal = lazy(() => import("@/components/ui/SessionExplainerModal").then(m => ({ default: m.SessionExplainerModal })));
 
 const roasts = [
   "You could've learned Kubernetes.",
@@ -50,8 +53,11 @@ export const Dashboard = () => {
   const { chain, isLoading: chainLoading, validateChainIntegrity } = useProcrastinationChain();
   const { achievements, chainStats } = useAchievements();
   const { theme } = useTheme();
+  const { reducedMotion } = usePerformance();
   
-  const [currentRoast] = useState(roasts[Math.floor(Math.random() * roasts.length)]);
+  // Memoize static values
+  const currentRoast = useMemo(() => roasts[Math.floor(Math.random() * roasts.length)], []);
+  
   const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
   const [timeWasted, setTimeWasted] = useState(0);
   const [hashCopied, setHashCopied] = useState(false);
@@ -62,80 +68,117 @@ export const Dashboard = () => {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
-  // Calculate time wasted from chain
-  useEffect(() => {
-    const totalSeconds = chainStats.totalMinutes * 60;
-    setTimeWasted(totalSeconds);
-  }, [chainStats.totalMinutes]);
+  // Memoize time calculation
+  const baseTimeSeconds = useMemo(() => chainStats.totalMinutes * 60, [chainStats.totalMinutes]);
 
-  // Slowly increment time wasted for effect
+  // Initialize time wasted
   useEffect(() => {
+    setTimeWasted(baseTimeSeconds);
+  }, [baseTimeSeconds]);
+
+  // Slowly increment time wasted for effect - only when not in reduced motion
+  useEffect(() => {
+    if (reducedMotion) return;
+    
     const interval = setInterval(() => {
       setTimeWasted((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [reducedMotion]);
 
-  // Validate chain integrity
+  // Validate chain integrity - memoize the validation call
   useEffect(() => {
     if (chain.length > 0) {
       validateChainIntegrity().then(setChainIntegrity);
     }
-  }, [chain, validateChainIntegrity]);
+  }, [chain.length, validateChainIntegrity]);
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return { hours, minutes, seconds: seconds % 60 };
-  };
+  // Memoize computed values
+  const time = useMemo(() => {
+    const hours = Math.floor(timeWasted / 3600);
+    const minutes = Math.floor((timeWasted % 3600) / 60);
+    return { hours, minutes, seconds: timeWasted % 60 };
+  }, [timeWasted]);
 
-  const time = formatTime(timeWasted);
-  const latestHash = chain.length > 0 ? chain[chain.length - 1].current_hash : "0".repeat(64);
-  const shortHash = `0x${latestHash.substring(0, 6)}...${latestHash.substring(latestHash.length - 4)}`;
-  const unlockedAchievements = achievements.filter((a) => a.unlocked).slice(0, 5);
+  const { latestHash, shortHash } = useMemo(() => {
+    const hash = chain.length > 0 ? chain[chain.length - 1].current_hash : "0".repeat(64);
+    return {
+      latestHash: hash,
+      shortHash: `0x${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`,
+    };
+  }, [chain]);
 
-  const handleSignOut = async () => {
+  const unlockedAchievements = useMemo(
+    () => achievements.filter((a) => a.unlocked).slice(0, 5),
+    [achievements]
+  );
+
+  const procrastinationScore = useMemo(
+    () => Math.min(100, Math.floor(chainStats.totalMinutes / 10)),
+    [chainStats.totalMinutes]
+  );
+
+  const lastSession = useMemo(() => {
+    if (chain.length === 0) return null;
+    const last = chain[chain.length - 1];
+    return {
+      activity: last.activity_type,
+      duration: last.duration_minutes,
+      mood: last.mood,
+      excuse: last.excuse,
+    };
+  }, [chain]);
+
+  // Memoize callbacks
+  const handleSignOut = useCallback(async () => {
     await signOut();
-    navigate("/");
-  };
+    navigate("/", { replace: true });
+  }, [signOut, navigate]);
 
-  const handleCopyHash = (e: React.MouseEvent) => {
+  const handleCopyHash = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(latestHash);
     setHashCopied(true);
     setTimeout(() => setHashCopied(false), 2000);
-  };
+  }, [latestHash]);
 
-  const handleHashClick = () => {
-    // Navigate to chain viewer with highlight on latest block
+  const handleHashClick = useCallback(() => {
     navigate("/chain", { state: { highlightLatest: true } });
-  };
+  }, [navigate]);
 
-  const handleChainLengthClick = () => {
+  const handleChainLengthClick = useCallback(() => {
     setShowChainModal(true);
-  };
+  }, []);
 
-  const handleSessionsClick = () => {
+  const handleSessionsClick = useCallback(() => {
     setShowSessionModal(true);
-  };
+  }, []);
 
-  // Get last session for modal
-  const lastSession = chain.length > 0 ? {
-    activity: chain[chain.length - 1].activity_type,
-    duration: chain[chain.length - 1].duration_minutes,
-    mood: chain[chain.length - 1].mood,
-    excuse: chain[chain.length - 1].excuse,
-  } : null;
+  const handleLogClick = useCallback(() => {
+    navigate("/log");
+  }, [navigate]);
+
+  const handleAnalyticsClick = useCallback(() => {
+    navigate("/analytics");
+  }, [navigate]);
+
+  const handleSettingsClick = useCallback(() => {
+    navigate("/settings");
+  }, [navigate]);
+
+  const handleAchievementsClick = useCallback(() => {
+    navigate("/achievements");
+  }, [navigate]);
 
   if (authLoading || chainLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-gradient">
         <motion.div
-          animate={{ rotate: 360 }}
+          animate={reducedMotion ? {} : { rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
         >
           <Loader2 className="w-8 h-8 text-primary" />
@@ -146,19 +189,19 @@ export const Dashboard = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
       
       {/* Navigation */}
       <motion.nav 
         className="fixed top-0 left-0 right-0 z-50 p-4"
-        initial={{ y: -100 }}
+        initial={reducedMotion ? {} : { y: -100 }}
         animate={{ y: 0 }}
         transition={{ delay: 0.5 }}
       >
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.h2 
             className="font-heading font-bold text-xl text-primary cursor-pointer"
-            whileHover={{ scale: 1.05 }}
+            whileHover={reducedMotion ? {} : { scale: 1.05 }}
             onClick={() => navigate("/")}
           >
             PoP™
@@ -167,7 +210,7 @@ export const Dashboard = () => {
             <NeonButton 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate("/analytics")}
+              onClick={handleAnalyticsClick}
             >
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
@@ -175,7 +218,7 @@ export const Dashboard = () => {
             <NeonButton 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate("/settings")}
+              onClick={handleSettingsClick}
             >
               <Settings className="w-4 h-4" />
             </NeonButton>
@@ -195,13 +238,13 @@ export const Dashboard = () => {
         {/* Hero - Time Wasted Counter */}
         <motion.section 
           className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
+          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <motion.div
             className="inline-flex items-center gap-2 text-muted-foreground mb-4"
-            animate={{ opacity: [0.7, 1, 0.7] }}
+            animate={reducedMotion ? {} : { opacity: [0.7, 1, 0.7] }}
             transition={{ duration: 3, repeat: Infinity }}
           >
             <Clock className="w-5 h-5" />
@@ -234,7 +277,7 @@ export const Dashboard = () => {
 
           <motion.p 
             className="text-lg text-muted-foreground italic"
-            initial={{ opacity: 0 }}
+            initial={reducedMotion ? {} : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
           >
@@ -246,19 +289,19 @@ export const Dashboard = () => {
         <div className="grid lg:grid-cols-3 gap-6 mb-16">
           {/* Procrastination Gauge */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
+            initial={reducedMotion ? {} : { opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5 }}
             className="lg:col-span-1"
           >
             <GlassCard className="h-full flex items-center justify-center">
-              <ProcrastinationGauge score={Math.min(100, Math.floor(chainStats.totalMinutes / 10))} />
+              <ProcrastinationGauge score={procrastinationScore} />
             </GlassCard>
           </motion.div>
 
           {/* Main CTA and Stats */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
             className="lg:col-span-2 space-y-6"
@@ -266,7 +309,7 @@ export const Dashboard = () => {
             {/* Log Procrastination CTA */}
             <GlassCard className="text-center py-10">
               <motion.div
-                animate={{ 
+                animate={reducedMotion ? {} : { 
                   boxShadow: [
                     "0 0 20px hsl(185 100% 50% / 0.3)",
                     "0 0 40px hsl(185 100% 50% / 0.4)",
@@ -278,14 +321,14 @@ export const Dashboard = () => {
               >
                 <NeonButton 
                   size="xl" 
-                  onClick={() => navigate("/log")}
+                  onClick={handleLogClick}
                   className="group"
                 >
                   <Zap className="w-6 h-6 mr-3 group-hover:animate-pulse" />
                   Log Procrastination
                   <motion.span
                     className="ml-3 opacity-50"
-                    animate={{ x: [0, 5, 0] }}
+                    animate={reducedMotion ? {} : { x: [0, 5, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
                     →
@@ -322,7 +365,7 @@ export const Dashboard = () => {
 
         {/* Latest Block Hash - Interactive */}
         <motion.section
-          initial={{ opacity: 0, y: 30 }}
+          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
           className="mb-16"
@@ -348,25 +391,25 @@ export const Dashboard = () => {
                 <motion.button
                   onClick={handleCopyHash}
                   className={`p-2 rounded-lg ${isDark ? 'hover:bg-muted/50' : 'hover:bg-muted/70'} transition-colors`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={reducedMotion ? {} : { scale: 1.1 }}
+                  whileTap={reducedMotion ? {} : { scale: 0.9 }}
                 >
                   <AnimatePresence mode="wait">
                     {hashCopied ? (
                       <motion.div
                         key="check"
-                        initial={{ scale: 0 }}
+                        initial={reducedMotion ? {} : { scale: 0 }}
                         animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
+                        exit={reducedMotion ? {} : { scale: 0 }}
                       >
                         <Check className="w-4 h-4 text-neon-green" />
                       </motion.div>
                     ) : (
                       <motion.div
                         key="copy"
-                        initial={{ scale: 0 }}
+                        initial={reducedMotion ? {} : { scale: 0 }}
                         animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
+                        exit={reducedMotion ? {} : { scale: 0 }}
                       >
                         <Copy className="w-4 h-4 text-muted-foreground" />
                       </motion.div>
@@ -384,7 +427,7 @@ export const Dashboard = () => {
                 {chainIntegrity.valid ? (
                   <>
                     <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
+                      animate={reducedMotion ? {} : { scale: [1, 1.2, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
                       <Check className="w-5 h-5 text-neon-green" />
@@ -406,7 +449,7 @@ export const Dashboard = () => {
               {/* Explanation panel */}
               <motion.div
                 className={`p-3 rounded-xl ${isDark ? 'bg-primary/5 border border-primary/20' : 'bg-primary/5 border border-primary/10'}`}
-                initial={{ opacity: 0, height: 0 }}
+                initial={reducedMotion ? {} : { opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 transition={{ delay: 0.3 }}
               >
@@ -423,7 +466,7 @@ export const Dashboard = () => {
 
         {/* Achievements */}
         <motion.section
-          initial={{ opacity: 0, y: 30 }}
+          initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
         >
@@ -435,7 +478,7 @@ export const Dashboard = () => {
             <NeonButton 
               variant="ghost" 
               size="sm"
-              onClick={() => navigate("/achievements")}
+              onClick={handleAchievementsClick}
             >
               View All
               <Award className="w-4 h-4 ml-2" />
@@ -447,7 +490,7 @@ export const Dashboard = () => {
               unlockedAchievements.map((achievement, index) => (
                 <motion.div
                   key={achievement.code}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1 + index * 0.1 }}
                 >
@@ -462,35 +505,48 @@ export const Dashboard = () => {
                 </motion.div>
               ))
             ) : (
-              <GlassCard className="min-w-[200px] text-center opacity-50">
-                <p className="text-sm text-muted-foreground">
-                  No achievements yet. Start procrastinating!
-                </p>
+              <GlassCard className="w-full text-center py-8">
+                <Trophy className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground">No achievements yet. Start procrastinating!</p>
               </GlassCard>
             )}
           </div>
         </motion.section>
       </main>
 
-      {/* Bottom gradient */}
-      <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none z-40" />
+      {/* Lazy-loaded Modals */}
+      <Suspense fallback={null}>
+        {showChainModal && (
+          <ChainExplainerModal
+            isOpen={showChainModal}
+            onClose={() => setShowChainModal(false)}
+            chainLength={chain.length}
+            onViewChain={() => {
+              setShowChainModal(false);
+              navigate("/chain");
+            }}
+          />
+        )}
+      </Suspense>
 
-      {/* Modals */}
-      <ChainExplainerModal
-        isOpen={showChainModal}
-        onClose={() => setShowChainModal(false)}
-        chainLength={chain.length}
-        onViewChain={() => navigate("/chain", { state: { scrollToTop: true } })}
-      />
-
-      <SessionExplainerModal
-        isOpen={showSessionModal}
-        onClose={() => setShowSessionModal(false)}
-        totalSessions={chainStats.totalSessions}
-        lastSession={lastSession}
-        onLogNew={() => navigate("/log")}
-        onViewLast={() => navigate("/log", { state: { showLastSession: true } })}
-      />
+      <Suspense fallback={null}>
+        {showSessionModal && (
+          <SessionExplainerModal
+            isOpen={showSessionModal}
+            onClose={() => setShowSessionModal(false)}
+            totalSessions={chainStats.totalSessions}
+            lastSession={lastSession}
+            onViewLast={() => {
+              setShowSessionModal(false);
+              navigate("/chain");
+            }}
+            onLogNew={() => {
+              setShowSessionModal(false);
+              navigate("/log");
+            }}
+          />
+        )}
+      </Suspense>
     </div>
   );
 };

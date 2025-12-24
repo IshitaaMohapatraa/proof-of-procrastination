@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { usePerformance } from "@/hooks/usePerformance";
 import { ArrowLeft, TrendingUp, Clock, Calendar, Loader2 } from "lucide-react";
 
 const activityLabels: Record<string, string> = {
@@ -31,22 +32,35 @@ export const Analytics = () => {
     isLoading,
     hasData
   } = useAnalytics();
+  const { reducedMotion } = usePerformance();
 
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
-  const stats = [
+  // Memoize stats calculation
+  const stats = useMemo(() => [
     { label: "Total Time This Week", value: `${Math.round(weeklyData.reduce((sum, d) => sum + d.minutes, 0) / 60 * 10) / 10}h`, trend: hasData ? "+Growing" : "Start logging!" },
     { label: "Average Session", value: `${averageSessionMinutes}min`, trend: hasData ? "Consistent" : "-" },
     { label: "Longest Session", value: `${longestSession}min`, trend: hasData ? "Personal Best!" : "-" },
     { label: "Total Sessions", value: `${totalSessions}`, trend: hasData ? "Active procrastinator" : "None yet" },
-  ];
+  ], [weeklyData, averageSessionMinutes, longestSession, totalSessions, hasData]);
 
-  const maxHours = Math.max(...weeklyData.map(d => d.hours), 1);
+  const maxHours = useMemo(() => 
+    Math.max(...weeklyData.map(d => d.hours), 1),
+    [weeklyData]
+  );
+
+  const handleBack = useCallback(() => {
+    navigate("/dashboard", { replace: true });
+  }, [navigate]);
+
+  const handleLogFirst = useCallback(() => {
+    navigate("/log");
+  }, [navigate]);
 
   if (authLoading || isLoading) {
     return (
@@ -58,18 +72,18 @@ export const Analytics = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       {/* Back button */}
       <motion.div
         className="fixed top-4 left-4 z-50"
-        initial={{ opacity: 0, x: -20 }}
+        initial={reducedMotion ? {} : { opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
       >
         <NeonButton 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/dashboard")}
+          onClick={handleBack}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -78,7 +92,7 @@ export const Analytics = () => {
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
@@ -93,7 +107,7 @@ export const Analytics = () => {
         {!hasData ? (
           <GlassCard className="text-center py-16">
             <p className="text-muted-foreground mb-4">No data yet. Start procrastinating to see your stats!</p>
-            <NeonButton onClick={() => navigate("/log")}>
+            <NeonButton onClick={handleLogFirst}>
               Log Your First Session
             </NeonButton>
           </GlassCard>
@@ -104,7 +118,7 @@ export const Analytics = () => {
               {stats.map((stat, index) => (
                 <motion.div
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
@@ -125,7 +139,7 @@ export const Analytics = () => {
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Weekly Bar Chart */}
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
+                initial={reducedMotion ? {} : { opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
@@ -140,7 +154,7 @@ export const Analytics = () => {
                       <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
                         <motion.div
                           className="w-full bg-gradient-to-t from-primary to-accent rounded-t-lg relative group"
-                          initial={{ height: 0 }}
+                          initial={reducedMotion ? {} : { height: 0 }}
                           animate={{ height: `${(day.hours / maxHours) * 100}%` }}
                           transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
                           style={{
@@ -167,7 +181,7 @@ export const Analytics = () => {
 
               {/* Activity Breakdown */}
               <motion.div
-                initial={{ opacity: 0, x: 30 }}
+                initial={reducedMotion ? {} : { opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.5 }}
               >
@@ -181,7 +195,7 @@ export const Analytics = () => {
                     {activityBreakdown.slice(0, 5).map((item, index) => (
                       <motion.div
                         key={item.activity}
-                        initial={{ opacity: 0, x: 20 }}
+                        initial={reducedMotion ? {} : { opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.6 + index * 0.1 }}
                       >
@@ -195,7 +209,7 @@ export const Analytics = () => {
                   </div>
 
                   <motion.p
-                    initial={{ opacity: 0 }}
+                    initial={reducedMotion ? {} : { opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.2 }}
                     className="text-sm text-accent text-center mt-6 italic"
@@ -208,7 +222,7 @@ export const Analytics = () => {
 
             {/* Roast Section */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
               className="mt-8"
@@ -219,7 +233,7 @@ export const Analytics = () => {
                 </h3>
                 <motion.p
                   className="text-lg text-muted-foreground max-w-xl mx-auto"
-                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  animate={reducedMotion ? {} : { opacity: [0.7, 1, 0.7] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 >
                   "Based on your data, you've spent {Math.round(totalMinutes / 60)} hours procrastinating. 
