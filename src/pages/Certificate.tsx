@@ -3,6 +3,7 @@ import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -10,7 +11,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { usePerformance } from "@/hooks/usePerformance";
 import { useAnimatedCounter } from "@/hooks/useAnimatedCounter";
 import { 
-  ArrowLeft, 
   Download, 
   Share2,
   Award,
@@ -209,21 +209,7 @@ export const Certificate = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      {/* Back Button */}
-      <motion.div
-        className="fixed top-4 left-4 z-50"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
-        <NeonButton 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate("/dashboard")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </NeonButton>
-      </motion.div>
+      <PageHeader backPath="/dashboard" showHome={false} />
 
       <main className="relative z-10 pt-16 pb-16 px-4 max-w-3xl mx-auto">
         {/* Title */}

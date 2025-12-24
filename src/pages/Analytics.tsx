@@ -4,11 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { usePerformance } from "@/hooks/usePerformance";
-import { ArrowLeft, TrendingUp, Clock, Calendar, Loader2 } from "lucide-react";
+import { TrendingUp, Clock, Calendar, Loader2 } from "lucide-react";
 
 const activityLabels: Record<string, string> = {
   social_media: "Social Media",
@@ -74,21 +75,7 @@ export const Analytics = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      {/* Back button */}
-      <motion.div
-        className="fixed top-4 left-4 z-50"
-        initial={reducedMotion ? {} : { opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
-        <NeonButton 
-          variant="ghost" 
-          size="sm"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </NeonButton>
-      </motion.div>
+      <PageHeader backPath="/dashboard" showHome={false} />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-6xl mx-auto">
         <motion.div

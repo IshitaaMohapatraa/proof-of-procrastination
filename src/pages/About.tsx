@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { SlothMascot } from "@/components/ui/SlothMascot";
 import { 
-  ArrowLeft,
   Github,
   Twitter,
   Heart,
@@ -57,20 +57,7 @@ export const About = () => {
     <div className="relative min-h-screen overflow-hidden animated-gradient">
       <OptimizedParticleField />
 
-      <motion.div
-        className="fixed top-4 left-4 z-50"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
-        <NeonButton 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate("/dashboard")}
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </NeonButton>
-      </motion.div>
+      <PageHeader backPath="/dashboard" showHome={false} />
 
       {/* Easter Egg Popup */}
       {easterEggTriggered && (
