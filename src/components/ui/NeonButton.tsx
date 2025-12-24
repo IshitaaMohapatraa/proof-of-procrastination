@@ -25,7 +25,7 @@ export const NeonButton = ({
     primary: cn(
       "bg-primary/20 text-primary border-primary/50",
       "hover:bg-primary/30 hover:border-primary",
-      glowing && "glow-cyan"
+      glowing && "glow-pink"
     ),
     secondary: cn(
       "bg-accent/20 text-accent border-accent/50",
@@ -53,7 +53,7 @@ export const NeonButton = ({
   return (
     <motion.button
       className={cn(
-        "relative font-heading font-semibold border-2 rounded-xl",
+        "relative font-heading font-semibold border-2 rounded-xl theme-transition",
         "transition-all duration-300 cursor-pointer",
         "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100",
         variants[variant],

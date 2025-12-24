@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Particle {
   x: number;
@@ -8,12 +9,15 @@ interface Particle {
   speedX: number;
   speedY: number;
   opacity: number;
+  baseSpeedX: number;
+  baseSpeedY: number;
 }
 
 export const ParticleField = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationRef = useRef<number>(0);
+  const { theme, chaosMode } = useTheme();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -31,19 +35,43 @@ export const ParticleField = () => {
 
     // Initialize particles
     const particleCount = 80;
-    particlesRef.current = Array.from({ length: particleCount }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      size: Math.random() * 2 + 0.5,
-      speedX: (Math.random() - 0.5) * 0.3,
-      speedY: (Math.random() - 0.5) * 0.3,
-      opacity: Math.random() * 0.5 + 0.1,
-    }));
+    particlesRef.current = Array.from({ length: particleCount }, () => {
+      const speedX = (Math.random() - 0.5) * 0.3;
+      const speedY = (Math.random() - 0.5) * 0.3;
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speedX,
+        speedY,
+        baseSpeedX: speedX,
+        baseSpeedY: speedY,
+        opacity: Math.random() * 0.5 + 0.1,
+      };
+    });
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Theme-based colors
+      const isDark = theme === "dark";
+      const primaryColor = isDark 
+        ? { r: 255, g: 110, b: 199 }  // Neon pink
+        : { r: 219, g: 112, b: 147 }; // Soft rose
+      const secondaryColor = isDark 
+        ? { r: 127, g: 90, b: 240 }   // Neon violet
+        : { r: 221, g: 160, b: 221 }; // Soft lavender
+
       particlesRef.current.forEach((particle) => {
+        // Chaos mode: randomize speeds
+        if (chaosMode) {
+          particle.speedX = particle.baseSpeedX * (1 + Math.sin(Date.now() * 0.001 + particle.x) * 2);
+          particle.speedY = particle.baseSpeedY * (1 + Math.cos(Date.now() * 0.001 + particle.y) * 2);
+        } else {
+          particle.speedX = particle.baseSpeedX;
+          particle.speedY = particle.baseSpeedY;
+        }
+
         particle.x += particle.speedX;
         particle.y += particle.speedY;
 
@@ -62,9 +90,16 @@ export const ParticleField = () => {
           particle.y,
           particle.size * 3
         );
-        gradient.addColorStop(0, `rgba(0, 245, 255, ${particle.opacity})`);
-        gradient.addColorStop(0.5, `rgba(127, 90, 240, ${particle.opacity * 0.5})`);
-        gradient.addColorStop(1, "rgba(0, 245, 255, 0)");
+        
+        gradient.addColorStop(
+          0, 
+          `rgba(${primaryColor.r}, ${primaryColor.g}, ${primaryColor.b}, ${particle.opacity})`
+        );
+        gradient.addColorStop(
+          0.5, 
+          `rgba(${secondaryColor.r}, ${secondaryColor.g}, ${secondaryColor.b}, ${particle.opacity * 0.5})`
+        );
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
 
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size * 3, 0, Math.PI * 2);
@@ -81,7 +116,7 @@ export const ParticleField = () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationRef.current);
     };
-  }, []);
+  }, [theme, chaosMode]);
 
   return (
     <motion.canvas
