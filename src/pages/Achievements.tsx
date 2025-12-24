@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ParticleField } from "@/components/ui/ParticleField";
+import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { AchievementWrappedCard } from "@/components/ui/AchievementWrappedCard";
 import { WrappedModal } from "@/components/ui/WrappedModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
+import { usePerformance } from "@/hooks/usePerformance";
 import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 
 export const Achievements = () => {
@@ -15,6 +16,7 @@ export const Achievements = () => {
   const { user, loading: authLoading } = useAuth();
   const { achievements, chainStats, isLoading } = useAchievements();
   const { chain } = useProcrastinationChain();
+  const { reducedMotion } = usePerformance();
   
   const [selectedAchievement, setSelectedAchievement] = useState<{
     code: string;
@@ -26,11 +28,14 @@ export const Achievements = () => {
   // Redirect if not logged in
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/auth", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
-  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const unlockedCount = useMemo(() => 
+    achievements.filter(a => a.unlocked).length,
+    [achievements]
+  );
 
   // Calculate top excuses from chain
   const topExcuses = useMemo(() => {
@@ -84,6 +89,23 @@ export const Achievements = () => {
       }));
   }, [achievements]);
 
+  const handleBack = useCallback(() => {
+    navigate("/dashboard", { replace: true });
+  }, [navigate]);
+
+  const handleSelectAchievement = useCallback((achievement: {
+    code: string;
+    name: string;
+    icon: string;
+    unlockedAt?: string;
+  }) => {
+    setSelectedAchievement(achievement);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedAchievement(null);
+  }, []);
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center animated-gradient">
@@ -94,18 +116,18 @@ export const Achievements = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
-      <ParticleField />
+      <OptimizedParticleField />
 
       {/* Back button */}
       <motion.div
         className="fixed top-4 left-4 z-50"
-        initial={{ opacity: 0, x: -20 }}
+        initial={reducedMotion ? {} : { opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
       >
         <NeonButton 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate("/dashboard")}
+          onClick={handleBack}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -114,7 +136,7 @@ export const Achievements = () => {
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-4xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-10"
         >
@@ -137,9 +159,9 @@ export const Achievements = () => {
           {achievements.map((achievement, index) => (
             <motion.div
               key={achievement.code}
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={reducedMotion ? {} : { opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: Math.min(index * 0.05, 0.5) }} // Cap delay
             >
               <AchievementWrappedCard
                 code={achievement.code}
@@ -149,7 +171,7 @@ export const Achievements = () => {
                 rarity={achievement.rarity}
                 unlocked={achievement.unlocked}
                 unlockedAt={achievement.unlockedAt}
-                onClick={() => setSelectedAchievement({
+                onClick={() => handleSelectAchievement({
                   code: achievement.code,
                   name: achievement.name,
                   icon: achievement.icon,
@@ -162,7 +184,7 @@ export const Achievements = () => {
 
         {/* Secret hint */}
         <motion.p
-          initial={{ opacity: 0 }}
+          initial={reducedMotion ? {} : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
           className="text-center text-sm text-muted-foreground mt-8 italic"
@@ -174,7 +196,7 @@ export const Achievements = () => {
       {/* Wrapped Modal */}
       <WrappedModal
         isOpen={!!selectedAchievement}
-        onClose={() => setSelectedAchievement(null)}
+        onClose={handleCloseModal}
         achievementName={selectedAchievement?.name || ""}
         achievementIcon={selectedAchievement?.icon || "🏆"}
         totalMinutes={chainStats.totalMinutes}

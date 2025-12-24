@@ -18,16 +18,22 @@ export function useAnalytics() {
       };
     }
 
-    // Total time
+    // Total time - memoized calculations
     const totalMinutes = chain.reduce((sum, b) => sum + b.duration_minutes, 0);
     const totalSessions = chain.length;
     const averageSessionMinutes = Math.round(totalMinutes / totalSessions);
     const longestSession = Math.max(...chain.map((b) => b.duration_minutes));
 
-    // Activity breakdown
+    // Activity breakdown - single pass through chain
     const activityCounts: Record<string, number> = {};
+    const hourCounts: Record<number, number> = {};
+    
     chain.forEach((b) => {
+      // Activity counts
       activityCounts[b.activity_type] = (activityCounts[b.activity_type] || 0) + b.duration_minutes;
+      // Hour counts
+      const hour = new Date(b.timestamp).getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     });
 
     const totalActivityMinutes = Object.values(activityCounts).reduce((a, b) => a + b, 0);
@@ -42,16 +48,12 @@ export function useAnalytics() {
     const mostCommonActivity = activityBreakdown[0]?.activity || null;
 
     // Peak hour
-    const hourCounts: Record<number, number> = {};
-    chain.forEach((b) => {
-      const hour = new Date(b.timestamp).getHours();
-      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
-    });
-
     const peakHour = Object.entries(hourCounts).sort(([, a], [, b]) => b - a)[0]?.[0];
 
-    // Weekly data (last 7 days)
+    // Weekly data (last 7 days) - optimized date handling
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const weeklyData = Array.from({ length: 7 }, (_, i) => {
       const date = new Date(today);
       date.setDate(date.getDate() - (6 - i));
