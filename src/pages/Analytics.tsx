@@ -1,41 +1,60 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { ArrowLeft, TrendingUp, Clock, Calendar } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { ArrowLeft, TrendingUp, Clock, Calendar, Loader2 } from "lucide-react";
 
-// Mock data for charts
-const weeklyData = [
-  { day: "Mon", hours: 2.5 },
-  { day: "Tue", hours: 4.2 },
-  { day: "Wed", hours: 1.8 },
-  { day: "Thu", hours: 5.1 },
-  { day: "Fri", hours: 6.3 },
-  { day: "Sat", hours: 8.2 },
-  { day: "Sun", hours: 7.4 },
-];
-
-const excuseData = [
-  { excuse: "Social Media", percentage: 35, color: "primary" },
-  { excuse: "Gaming", percentage: 25, color: "accent" },
-  { excuse: "Streaming", percentage: 20, color: "secondary" },
-  { excuse: "Snacking", percentage: 12, color: "destructive" },
-  { excuse: "Other", percentage: 8, color: "muted" },
-];
-
-const stats = [
-  { label: "Total Hours This Week", value: "35.5h", trend: "+12%" },
-  { label: "Average Session", value: "47min", trend: "+5min" },
-  { label: "Longest Streak", value: "4h 23m", trend: "Personal Best!" },
-  { label: "Excuses Generated", value: "89", trend: "+23" },
-];
+const activityLabels: Record<string, string> = {
+  social_media: "Social Media",
+  gaming: "Gaming",
+  streaming: "Streaming",
+  snacking: "Snacking",
+  daydreaming: "Daydreaming",
+  other: "Other",
+};
 
 export const Analytics = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { 
+    totalMinutes, 
+    totalSessions, 
+    averageSessionMinutes, 
+    longestSession,
+    weeklyData, 
+    activityBreakdown,
+    isLoading,
+    hasData
+  } = useAnalytics();
 
-  const maxHours = Math.max(...weeklyData.map(d => d.hours));
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  const stats = [
+    { label: "Total Time This Week", value: `${Math.round(weeklyData.reduce((sum, d) => sum + d.minutes, 0) / 60 * 10) / 10}h`, trend: hasData ? "+Growing" : "Start logging!" },
+    { label: "Average Session", value: `${averageSessionMinutes}min`, trend: hasData ? "Consistent" : "-" },
+    { label: "Longest Session", value: `${longestSession}min`, trend: hasData ? "Personal Best!" : "-" },
+    { label: "Total Sessions", value: `${totalSessions}`, trend: hasData ? "Active procrastinator" : "None yet" },
+  ];
+
+  const maxHours = Math.max(...weeklyData.map(d => d.hours), 1);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center animated-gradient">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
@@ -71,135 +90,146 @@ export const Analytics = () => {
           </p>
         </motion.div>
 
-        {/* Stats Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {stats.map((stat, index) => (
+        {!hasData ? (
+          <GlassCard className="text-center py-16">
+            <p className="text-muted-foreground mb-4">No data yet. Start procrastinating to see your stats!</p>
+            <NeonButton onClick={() => navigate("/log")}>
+              Log Your First Session
+            </NeonButton>
+          </GlassCard>
+        ) : (
+          <>
+            {/* Stats Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <GlassCard hoverable>
+                    <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
+                    <p className="text-3xl font-heading font-bold text-primary">
+                      {stat.value}
+                    </p>
+                    <p className="text-sm text-neon-green mt-2 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      {stat.trend}
+                    </p>
+                  </GlassCard>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Weekly Bar Chart */}
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <GlassCard className="h-full">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    <h3 className="text-lg font-heading font-semibold">Weekly Overview</h3>
+                  </div>
+                  
+                  <div className="flex items-end justify-between h-48 gap-2">
+                    {weeklyData.map((day, index) => (
+                      <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
+                        <motion.div
+                          className="w-full bg-gradient-to-t from-primary to-accent rounded-t-lg relative group"
+                          initial={{ height: 0 }}
+                          animate={{ height: `${(day.hours / maxHours) * 100}%` }}
+                          transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
+                          style={{
+                            boxShadow: "0 0 20px hsl(185 100% 50% / 0.3)",
+                            minHeight: day.hours > 0 ? "8px" : "0px",
+                          }}
+                        >
+                          <motion.div
+                            className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card px-2 py-1 rounded text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+                          >
+                            {day.hours}h
+                          </motion.div>
+                        </motion.div>
+                        <span className="text-xs text-muted-foreground">{day.day}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="text-sm text-muted-foreground text-center mt-4 italic">
+                    "Weekend warrior of procrastination"
+                  </p>
+                </GlassCard>
+              </motion.div>
+
+              {/* Activity Breakdown */}
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <GlassCard className="h-full">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Clock className="w-5 h-5 text-accent" />
+                    <h3 className="text-lg font-heading font-semibold">How You Waste Time</h3>
+                  </div>
+
+                  <div className="space-y-4">
+                    {activityBreakdown.slice(0, 5).map((item, index) => (
+                      <motion.div
+                        key={item.activity}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 + index * 0.1 }}
+                      >
+                        <ProgressBar
+                          value={item.percentage}
+                          label={activityLabels[item.activity] || item.activity}
+                          variant={index === 0 ? "cyan" : index === 1 ? "violet" : "gradient"}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2 }}
+                    className="text-sm text-accent text-center mt-6 italic"
+                  >
+                    "Your phone is judging you"
+                  </motion.p>
+                </GlassCard>
+              </motion.div>
+            </div>
+
+            {/* Roast Section */}
             <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: 0.8 }}
+              className="mt-8"
             >
-              <GlassCard hoverable>
-                <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
-                <p className="text-3xl font-heading font-bold text-primary">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-neon-green mt-2 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
-                  {stat.trend}
-                </p>
+              <GlassCard className="text-center py-8" glowColor="violet">
+                <h3 className="text-xl font-heading font-semibold mb-4">
+                  AI-Generated Roast 🔥
+                </h3>
+                <motion.p
+                  className="text-lg text-muted-foreground max-w-xl mx-auto"
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  "Based on your data, you've spent {Math.round(totalMinutes / 60)} hours procrastinating. 
+                  That's enough time to {totalMinutes > 120 ? "learn a new skill" : "take a nice nap"}. 
+                  <span className="text-accent"> Priorities.</span>"
+                </motion.p>
               </GlassCard>
             </motion.div>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Weekly Bar Chart */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <GlassCard className="h-full">
-              <div className="flex items-center gap-2 mb-6">
-                <Calendar className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-heading font-semibold">Weekly Overview</h3>
-              </div>
-              
-              <div className="flex items-end justify-between h-48 gap-2">
-                {weeklyData.map((day, index) => (
-                  <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
-                    <motion.div
-                      className="w-full bg-gradient-to-t from-primary to-accent rounded-t-lg relative group"
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(day.hours / maxHours) * 100}%` }}
-                      transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
-                      style={{
-                        boxShadow: "0 0 20px hsl(185 100% 50% / 0.3)",
-                      }}
-                    >
-                      <motion.div
-                        className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card px-2 py-1 rounded text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                      >
-                        {day.hours}h
-                      </motion.div>
-                    </motion.div>
-                    <span className="text-xs text-muted-foreground">{day.day}</span>
-                  </div>
-                ))}
-              </div>
-
-              <p className="text-sm text-muted-foreground text-center mt-4 italic">
-                "Weekend warrior of procrastination"
-              </p>
-            </GlassCard>
-          </motion.div>
-
-          {/* Excuse Breakdown */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <GlassCard className="h-full">
-              <div className="flex items-center gap-2 mb-6">
-                <Clock className="w-5 h-5 text-accent" />
-                <h3 className="text-lg font-heading font-semibold">How You Waste Time</h3>
-              </div>
-
-              <div className="space-y-4">
-                {excuseData.map((item, index) => (
-                  <motion.div
-                    key={item.excuse}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
-                  >
-                    <ProgressBar
-                      value={item.percentage}
-                      label={item.excuse}
-                      variant={index === 0 ? "cyan" : index === 1 ? "violet" : "gradient"}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2 }}
-                className="text-sm text-accent text-center mt-6 italic"
-              >
-                "Your phone is judging you"
-              </motion.p>
-            </GlassCard>
-          </motion.div>
-        </div>
-
-        {/* Roast Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="mt-8"
-        >
-          <GlassCard className="text-center py-8" glowColor="violet">
-            <h3 className="text-xl font-heading font-semibold mb-4">
-              AI-Generated Roast 🔥
-            </h3>
-            <motion.p
-              className="text-lg text-muted-foreground max-w-xl mx-auto"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              "Based on your data, you've spent enough time on social media this week to learn a new language. 
-              Instead, you learned 47 new TikTok dances. <span className="text-accent">Priorities.</span>"
-            </motion.p>
-          </GlassCard>
-        </motion.div>
+          </>
+        )}
       </main>
     </div>
   );
