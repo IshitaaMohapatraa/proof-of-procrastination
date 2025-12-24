@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -37,19 +36,15 @@ const activityLabels: Record<string, string> = {
   other: "Other",
 };
 
-// Memoized block component to prevent re-renders
+// Memoized static block component - no animations
 const ChainBlock = memo(({ 
   block, 
-  index, 
   isExpanded, 
   onToggle,
-  reducedMotion 
 }: {
   block: any;
-  index: number;
   isExpanded: boolean;
   onToggle: () => void;
-  reducedMotion: boolean;
 }) => {
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
@@ -62,24 +57,9 @@ const ChainBlock = memo(({
   };
 
   return (
-    <motion.div
-      initial={reducedMotion ? {} : { opacity: 0, x: -30 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: Math.min(index * 0.05, 0.5) }} // Cap delay at 0.5s
-      className="relative pl-16"
-    >
-      {/* Chain link connector */}
-      <motion.div
-        className="absolute left-6 top-6 w-4 h-4 rounded-full bg-background border-2 border-primary"
-        animate={reducedMotion ? {} : { 
-          boxShadow: [
-            "0 0 5px hsl(185 100% 50% / 0.5)",
-            "0 0 15px hsl(185 100% 50% / 0.8)",
-            "0 0 5px hsl(185 100% 50% / 0.5)",
-          ]
-        }}
-        transition={{ duration: 2, repeat: Infinity, delay: Math.min(index * 0.2, 1) }}
-      />
+    <div className="relative pl-16">
+      {/* Chain link connector - static dot */}
+      <div className="absolute left-6 top-6 w-4 h-4 rounded-full bg-background border-2 border-primary" />
 
       <GlassCard 
         className="cursor-pointer"
@@ -111,14 +91,9 @@ const ChainBlock = memo(({
           </div>
         </div>
 
-        {/* Expanded Details */}
+        {/* Expanded Details - static */}
         {isExpanded && (
-          <motion.div
-            initial={reducedMotion ? {} : { opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={reducedMotion ? {} : { opacity: 0, height: 0 }}
-            className="mt-4 pt-4 border-t border-border/50 space-y-4"
-          >
+          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                 Block Hash
@@ -166,10 +141,10 @@ const ChainBlock = memo(({
 }`}
               </pre>
             </div>
-          </motion.div>
+          </div>
         )}
       </GlassCard>
-    </motion.div>
+    </div>
   );
 });
 
@@ -183,7 +158,7 @@ export const ChainViewer = () => {
   
   const [expandedBlock, setExpandedBlock] = useState<string | null>(null);
   const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
-  const [visibleCount, setVisibleCount] = useState(20); // Virtualization: show 20 at a time
+  const [visibleCount, setVisibleCount] = useState(20);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -218,14 +193,6 @@ export const ChainViewer = () => {
     setExpandedBlock(prev => prev === blockId ? null : blockId);
   }, []);
 
-  const handleBack = useCallback(() => {
-    navigate("/dashboard", { replace: true });
-  }, [navigate]);
-
-  const handleHome = useCallback(() => {
-    navigate("/dashboard", { replace: true });
-  }, [navigate]);
-
   const handleLogFirst = useCallback(() => {
     navigate("/log");
   }, [navigate]);
@@ -245,31 +212,22 @@ export const ChainViewer = () => {
       <PageHeader />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-3xl mx-auto">
-        <motion.div
-          initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <h1 className="text-4xl font-heading font-bold text-glow-cyan mb-2">
+        {/* Header - Static */}
+        <div className="text-center mb-10">
+          <h1 className={`text-4xl font-heading font-bold mb-2 ${!reducedMotion ? 'text-glow-cyan' : ''}`}>
             Your Procrastination Chain
           </h1>
           <p className="text-muted-foreground mb-4">
             An immutable record of your avoidance patterns
           </p>
           
-          {/* Chain Integrity Badge */}
-          <motion.div
+          {/* Chain Integrity Badge - Static */}
+          <div
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
               chainIntegrity.valid 
                 ? "bg-neon-green/20 text-neon-green border border-neon-green/50"
                 : "bg-destructive/20 text-destructive border border-destructive/50"
             }`}
-            animate={reducedMotion ? {} : { 
-              boxShadow: chainIntegrity.valid 
-                ? ["0 0 10px hsl(150 100% 50% / 0.3)", "0 0 20px hsl(150 100% 50% / 0.5)", "0 0 10px hsl(150 100% 50% / 0.3)"]
-                : ["0 0 10px hsl(345 100% 50% / 0.3)", "0 0 20px hsl(345 100% 50% / 0.5)", "0 0 10px hsl(345 100% 50% / 0.3)"]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
           >
             {chainIntegrity.valid ? (
               <>
@@ -282,8 +240,8 @@ export const ChainViewer = () => {
                 <span className="font-mono text-sm">Integrity Compromised at Block #{chainIntegrity.broken_at}</span>
               </>
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
         {chain.length === 0 ? (
           <GlassCard className="text-center py-16">
@@ -294,20 +252,18 @@ export const ChainViewer = () => {
           </GlassCard>
         ) : (
           <>
-            {/* Chain Timeline */}
+            {/* Chain Timeline - Static */}
             <div className="relative">
               {/* Vertical line */}
               <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-accent to-primary/20" />
 
               <div className="space-y-4">
-                {visibleChain.map((block, index) => (
+                {visibleChain.map((block) => (
                   <ChainBlock
                     key={block.id}
                     block={block}
-                    index={index}
                     isExpanded={expandedBlock === block.id}
                     onToggle={() => handleToggleBlock(block.id)}
-                    reducedMotion={reducedMotion}
                   />
                 ))}
               </div>
@@ -315,27 +271,18 @@ export const ChainViewer = () => {
 
             {/* Load More Button */}
             {visibleCount < reversedChain.length && (
-              <motion.div
-                className="text-center mt-8"
-                initial={reducedMotion ? {} : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <div className="text-center mt-8">
                 <NeonButton variant="secondary" onClick={handleLoadMore}>
                   Load More ({reversedChain.length - visibleCount} remaining)
                 </NeonButton>
-              </motion.div>
+              </div>
             )}
 
             {/* Genesis Block Indicator */}
             {visibleCount >= reversedChain.length && (
-              <motion.div
-                initial={reducedMotion ? {} : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-center mt-8 text-muted-foreground text-sm"
-              >
+              <div className="text-center mt-8 text-muted-foreground text-sm">
                 ⚡ Genesis Block - The First Procrastination ⚡
-              </motion.div>
+              </div>
             )}
           </>
         )}

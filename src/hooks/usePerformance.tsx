@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useRef, useEffect } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback } from "react";
 
 interface PerformanceContextType {
   performanceMode: boolean;
@@ -16,14 +16,15 @@ const animatedPagesSet = new Set<string>();
 const PerformanceContext = createContext<PerformanceContextType | undefined>(undefined);
 
 export function PerformanceProvider({ children }: { children: ReactNode }) {
+  // PERFORMANCE MODE ON BY DEFAULT
   const [performanceMode, setPerformanceModeState] = useState(() => {
     if (typeof window !== "undefined") {
-      // Also check for user's reduced motion preference
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const stored = localStorage.getItem("pop-performance-mode");
-      return stored === "true" || prefersReducedMotion;
+      // Default to TRUE (performance mode ON) unless explicitly set to false
+      if (stored === null) return true;
+      return stored !== "false";
     }
-    return false;
+    return true; // Default ON
   });
 
   const reducedMotion = typeof window !== "undefined" 
@@ -58,6 +59,7 @@ export function PerformanceProvider({ children }: { children: ReactNode }) {
         performanceMode,
         setPerformanceMode,
         togglePerformanceMode,
+        // ALWAYS reduce motion when performance mode is on
         reducedMotion: reducedMotion || performanceMode,
         hasPageAnimated,
         markPageAnimated,
