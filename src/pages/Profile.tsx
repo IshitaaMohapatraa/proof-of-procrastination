@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { WrappedCard } from "@/components/ui/WrappedCard";
+import { WrappedModal } from "@/components/ui/WrappedModal";
 import { SlothMascot } from "@/components/ui/SlothMascot";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
@@ -15,10 +16,8 @@ import {
   Link2, 
   Trophy, 
   Flame,
-  Share2,
   Loader2
 } from "lucide-react";
-import confetti from "canvas-confetti";
 
 const activityLabels: Record<string, string> = {
   social_media: "Social Media",
@@ -35,7 +34,7 @@ export const Profile = () => {
   const { achievements, chainStats } = useAchievements();
   const { chain } = useProcrastinationChain();
   
-  const [showWrapped, setShowWrapped] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -57,12 +56,6 @@ export const Profile = () => {
   const mostCommonActivity = Object.entries(activityCounts)
     .sort(([, a], [, b]) => b - a)[0];
 
-  // Mood breakdown
-  const moodCounts = chain.reduce((acc, block) => {
-    acc[block.mood] = (acc[block.mood] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
   // Top excuses
   const excuseCounts = chain.reduce((acc, block) => {
     if (block.excuse && block.excuse !== "No excuse provided") {
@@ -73,17 +66,23 @@ export const Profile = () => {
   
   const topExcuses = Object.entries(excuseCounts)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 3);
+    .slice(0, 3)
+    .map(([excuse, count]) => ({ excuse, count }));
 
   const equippedBadges = achievements.filter(a => a.unlocked).slice(0, 3);
+  const unlockedBadges = achievements
+    .filter(a => a.unlocked)
+    .map(a => ({
+      code: a.code,
+      name: a.name,
+      icon: a.icon,
+      unlockedAt: a.unlockedAt,
+    }));
 
-  const handleShare = () => {
-    confetti({
-      particleCount: 50,
-      spread: 60,
-      origin: { y: 0.7 },
-      colors: ['#00f5ff', '#7f5af0'],
-    });
+  // Get top achievement for the card
+  const topAchievement = achievements.find(a => a.unlocked) || {
+    name: "Procrastinator",
+    icon: "🦥",
   };
 
   if (authLoading) {
@@ -207,8 +206,8 @@ export const Profile = () => {
             transition={{ delay: 0.5 }}
           >
             <GlassCard hoverable>
-              <Trophy className="w-6 h-6 text-yellow-500 mb-2" />
-              <p className="text-3xl font-heading font-bold text-yellow-500">
+              <Trophy className="w-6 h-6 text-accent mb-2" />
+              <p className="text-3xl font-heading font-bold text-accent">
                 {achievements.filter(a => a.unlocked).length}
               </p>
               <p className="text-sm text-muted-foreground">Achievements</p>
@@ -216,89 +215,56 @@ export const Profile = () => {
           </motion.div>
         </div>
 
-        {/* Procrastination Wrapped */}
+        {/* Procrastination Wrapped Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <GlassCard glowColor="violet" className="relative overflow-hidden">
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/10"
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 4, repeat: Infinity }}
+          <h3 className="text-2xl font-heading font-bold text-center mb-6 text-glow-violet">
+            🎁 Your Procrastination Wrapped
+          </h3>
+
+          {chain.length > 0 ? (
+            <WrappedCard
+              achievementName={topAchievement.name}
+              achievementIcon={topAchievement.icon}
+              totalMinutes={chainStats.totalMinutes}
+              topActivity={mostCommonActivity ? {
+                name: mostCommonActivity[0],
+                count: mostCommonActivity[1],
+              } : null}
+              topExcuses={topExcuses}
+              badges={unlockedBadges}
+              onCardClick={() => setIsModalOpen(true)}
+              className="max-w-md mx-auto"
             />
-            
-            <div className="relative z-10">
-              <h3 className="text-2xl font-heading font-bold text-center mb-6 text-glow-violet">
-                🎁 Your Procrastination Wrapped
-              </h3>
-
-              {chain.length > 0 ? (
-                <div className="space-y-6">
-                  {/* Most Common Activity */}
-                  {mostCommonActivity && (
-                    <div className="text-center p-4 bg-muted/30 rounded-xl">
-                      <p className="text-sm text-muted-foreground mb-2">Your go-to distraction</p>
-                      <p className="text-3xl font-heading font-bold text-primary">
-                        {activityLabels[mostCommonActivity[0]] || mostCommonActivity[0]}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {mostCommonActivity[1]} times
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Mood Breakdown */}
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-3 text-center">How you felt while procrastinating</p>
-                    <div className="space-y-2">
-                      {Object.entries(moodCounts).slice(0, 4).map(([mood, count]) => (
-                        <ProgressBar
-                          key={mood}
-                          value={(count / chain.length) * 100}
-                          label={mood}
-                          variant="gradient"
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Top Excuses */}
-                  {topExcuses.length > 0 && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-3 text-center">Top excuses used</p>
-                      <div className="space-y-2">
-                        {topExcuses.map(([excuse, count], index) => (
-                          <div key={excuse} className="flex items-center gap-3 p-2 bg-muted/20 rounded-lg">
-                            <span className="text-lg">{index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉"}</span>
-                            <p className="text-sm flex-1 italic">"{excuse}"</p>
-                            <span className="text-xs text-muted-foreground">{count}x</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Share Button */}
-                  <div className="text-center pt-4">
-                    <NeonButton variant="secondary" onClick={handleShare}>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Share Your Wrapped
-                    </NeonButton>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Start procrastinating to see your wrapped!</p>
-                  <NeonButton className="mt-4" onClick={() => navigate("/log")}>
-                    Log Your First Session
-                  </NeonButton>
-                </div>
-              )}
-            </div>
-          </GlassCard>
+          ) : (
+            <GlassCard glowColor="violet" className="text-center py-8 max-w-md mx-auto">
+              <p className="text-muted-foreground">Start procrastinating to see your wrapped!</p>
+              <NeonButton className="mt-4" onClick={() => navigate("/log")}>
+                Log Your First Session
+              </NeonButton>
+            </GlassCard>
+          )}
         </motion.div>
+
+        {/* Wrapped Modal */}
+        <WrappedModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          achievementName={topAchievement.name}
+          achievementIcon={topAchievement.icon}
+          totalMinutes={chainStats.totalMinutes}
+          topActivity={mostCommonActivity ? {
+            name: mostCommonActivity[0],
+            count: mostCommonActivity[1],
+          } : null}
+          topExcuses={topExcuses}
+          badges={unlockedBadges}
+          longestSession={longestSession}
+          totalSessions={chain.length}
+        />
       </main>
     </div>
   );
