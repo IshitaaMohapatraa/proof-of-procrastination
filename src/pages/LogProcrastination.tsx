@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
-import { HashDisplay, generateFakeHash } from "@/components/ui/HashDisplay";
+import { HashDisplay } from "@/components/ui/HashDisplay";
+import { useAuth } from "@/hooks/useAuth";
+import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
+import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft, 
   Sparkles, 
@@ -15,11 +18,12 @@ import {
   Gamepad2,
   Tv,
   Globe,
-  HelpCircle
+  HelpCircle,
+  Loader2
 } from "lucide-react";
 
 const procrastinationTypes = [
-  { id: "social", label: "Social Media", icon: Globe, emoji: "📱" },
+  { id: "social_media", label: "Social Media", icon: Globe, emoji: "📱" },
   { id: "gaming", label: "Gaming", icon: Gamepad2, emoji: "🎮" },
   { id: "streaming", label: "Streaming", icon: Tv, emoji: "📺" },
   { id: "snacking", label: "Snacking", icon: Coffee, emoji: "🍕" },
@@ -38,18 +42,29 @@ const excuseGenerators = [
   "This IS work... kind of",
 ];
 
+const moodLabels = ["Very guilty", "Mildly concerned", "Neutral", "Pretty chill", "Zero regrets", "Unhinged"];
 const moodEmojis = ["😤", "😐", "🙂", "😊", "😌", "🥴"];
 
 export const LogProcrastination = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { addBlock, isAddingBlock } = useProcrastinationChain();
+  const { toast } = useToast();
+  
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [duration, setDuration] = useState(30);
   const [mood, setMood] = useState(2);
   const [excuse, setExcuse] = useState("");
   const [customNote, setCustomNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedHash, setGeneratedHash] = useState("");
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   const generateExcuse = () => {
     const randomExcuse = excuseGenerators[Math.floor(Math.random() * excuseGenerators.length)];
@@ -59,20 +74,42 @@ export const LogProcrastination = () => {
   const handleSubmit = async () => {
     if (!selectedType) return;
     
-    setIsSubmitting(true);
-    
-    // Fake loading states
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setGeneratedHash(generateFakeHash());
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    setIsSubmitting(false);
-    setShowSuccess(true);
-    
-    setTimeout(() => {
-      navigate("/chain");
-    }, 2500);
+    try {
+      const newBlock = await addBlock({
+        activity_type: selectedType,
+        custom_label: customNote || null,
+        duration_minutes: duration,
+        mood: moodLabels[mood],
+        excuse: excuse || "No excuse provided",
+      });
+
+      setGeneratedHash(newBlock.current_hash);
+      setShowSuccess(true);
+      
+      toast({
+        title: "Block Added!",
+        description: "Your procrastination has been immortalized.",
+      });
+
+      setTimeout(() => {
+        navigate("/chain");
+      }, 2500);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add block. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center animated-gradient">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
@@ -213,12 +250,7 @@ export const LogProcrastination = () => {
                     ))}
                   </div>
                   <p className="text-center text-sm text-muted-foreground mt-4">
-                    {mood === 0 && "Very guilty (as you should be)"}
-                    {mood === 1 && "Mildly concerned"}
-                    {mood === 2 && "Neutral (classic denial)"}
-                    {mood === 3 && "Pretty chill about it"}
-                    {mood === 4 && "Zero regrets"}
-                    {mood === 5 && "Absolutely unhinged"}
+                    {moodLabels[mood]}
                   </p>
                 </GlassCard>
               </motion.div>
@@ -285,13 +317,15 @@ export const LogProcrastination = () => {
                   size="xl"
                   className="w-full"
                   onClick={handleSubmit}
-                  disabled={!selectedType || isSubmitting}
+                  disabled={!selectedType || isAddingBlock}
                 >
-                  {isSubmitting ? (
+                  {isAddingBlock ? (
                     <motion.span
                       animate={{ opacity: [1, 0.5, 1] }}
                       transition={{ duration: 1, repeat: Infinity }}
+                      className="flex items-center gap-2"
                     >
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       Adding to Chain...
                     </motion.span>
                   ) : (

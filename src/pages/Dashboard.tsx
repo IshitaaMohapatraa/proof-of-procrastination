@@ -6,8 +6,11 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
 import { ProcrastinationGauge } from "@/components/ui/ProcrastinationGauge";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
-import { HashDisplay, generateFakeHash } from "@/components/ui/HashDisplay";
+import { HashDisplay } from "@/components/ui/HashDisplay";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { useAuth } from "@/hooks/useAuth";
+import { useProcrastinationChain } from "@/hooks/useProcrastinationChain";
+import { useAchievements } from "@/hooks/useAchievements";
 import { 
   Clock, 
   Trophy, 
@@ -16,17 +19,10 @@ import {
   BarChart3, 
   Award,
   Settings,
-  Zap
+  Zap,
+  LogOut,
+  Loader2
 } from "lucide-react";
-
-// Mock data
-const mockAchievements = [
-  { id: 1, name: "First Delay", icon: "🐌", unlocked: true },
-  { id: 2, name: "Hour Waster", icon: "⏰", unlocked: true },
-  { id: 3, name: "Serial Snoozer", icon: "😴", unlocked: true },
-  { id: 4, name: "Deadline Dancer", icon: "💃", unlocked: false },
-  { id: 5, name: "Week Wrecker", icon: "📅", unlocked: false },
-];
 
 const roasts = [
   "You could've learned Kubernetes.",
@@ -38,17 +34,41 @@ const roasts = [
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [timeWasted, setTimeWasted] = useState(14523);
+  const { user, signOut, loading: authLoading } = useAuth();
+  const { chain, isLoading: chainLoading, validateChainIntegrity } = useProcrastinationChain();
+  const { achievements, chainStats } = useAchievements();
+  
   const [currentRoast] = useState(roasts[Math.floor(Math.random() * roasts.length)]);
-  const [latestHash] = useState(generateFakeHash());
+  const [chainIntegrity, setChainIntegrity] = useState<{ valid: boolean; broken_at: number | null }>({ valid: true, broken_at: null });
+  const [timeWasted, setTimeWasted] = useState(0);
 
-  // Slowly increment time wasted
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Calculate time wasted from chain
+  useEffect(() => {
+    const totalSeconds = chainStats.totalMinutes * 60;
+    setTimeWasted(totalSeconds);
+  }, [chainStats.totalMinutes]);
+
+  // Slowly increment time wasted for effect
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimeWasted(prev => prev + Math.floor(Math.random() * 3) + 1);
-    }, 2000);
+      setTimeWasted((prev) => prev + 1);
+    }, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Validate chain integrity
+  useEffect(() => {
+    if (chain.length > 0) {
+      validateChainIntegrity().then(setChainIntegrity);
+    }
+  }, [chain]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -57,6 +77,26 @@ export const Dashboard = () => {
   };
 
   const time = formatTime(timeWasted);
+  const latestHash = chain.length > 0 ? chain[chain.length - 1].current_hash : "0".repeat(64);
+  const unlockedAchievements = achievements.filter((a) => a.unlocked).slice(0, 5);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  if (authLoading || chainLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center animated-gradient">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="w-8 h-8 text-primary" />
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
@@ -92,6 +132,13 @@ export const Dashboard = () => {
               onClick={() => navigate("/settings")}
             >
               <Settings className="w-4 h-4" />
+            </NeonButton>
+            <NeonButton 
+              variant="ghost" 
+              size="sm"
+              onClick={handleSignOut}
+            >
+              <LogOut className="w-4 h-4" />
             </NeonButton>
           </div>
         </div>
@@ -159,7 +206,7 @@ export const Dashboard = () => {
             className="lg:col-span-1"
           >
             <GlassCard className="h-full flex items-center justify-center">
-              <ProcrastinationGauge score={73} />
+              <ProcrastinationGauge score={Math.min(100, Math.floor(chainStats.totalMinutes / 10))} />
             </GlassCard>
           </motion.div>
 
@@ -206,13 +253,13 @@ export const Dashboard = () => {
 
             {/* Quick Stats */}
             <div className="grid md:grid-cols-2 gap-4">
-              <GlassCard hoverable glowColor="violet">
+              <GlassCard hoverable glowColor="violet" onClick={() => navigate("/chain")}>
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-xl bg-accent/20">
                     <Link2 className="w-6 h-6 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-heading font-bold">247</p>
+                    <p className="text-2xl font-heading font-bold">{chain.length}</p>
                     <p className="text-sm text-muted-foreground">Chain Length</p>
                   </div>
                 </div>
@@ -224,8 +271,8 @@ export const Dashboard = () => {
                     <Timer className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-heading font-bold">2h 34m</p>
-                    <p className="text-sm text-muted-foreground">Current Session</p>
+                    <p className="text-2xl font-heading font-bold">{chainStats.totalSessions}</p>
+                    <p className="text-sm text-muted-foreground">Total Sessions</p>
                   </div>
                 </div>
               </GlassCard>
@@ -249,8 +296,9 @@ export const Dashboard = () => {
               <HashDisplay hash={latestHash} />
             </div>
             <ProgressBar 
-              value={87} 
-              label="Chain Integrity" 
+              value={chainIntegrity.valid ? 100 : 50} 
+              label={chainIntegrity.valid ? "Chain Verified ✓" : `Chain Broken at Block #${chainIntegrity.broken_at}`}
+              variant={chainIntegrity.valid ? "cyan" : "gradient"}
               className="mt-4"
             />
           </GlassCard>
@@ -278,31 +326,31 @@ export const Dashboard = () => {
           </div>
 
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {mockAchievements.map((achievement, index) => (
-              <motion.div
-                key={achievement.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1 + index * 0.1 }}
-                style={{ 
-                  y: Math.sin(index * 0.5) * 5 
-                }}
-              >
-                <GlassCard 
-                  className={`min-w-[140px] text-center ${
-                    !achievement.unlocked && "opacity-50 grayscale"
-                  }`}
-                  hoverable={achievement.unlocked}
-                  glowColor={achievement.unlocked ? "cyan" : "violet"}
+            {unlockedAchievements.length > 0 ? (
+              unlockedAchievements.map((achievement, index) => (
+                <motion.div
+                  key={achievement.code}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1 + index * 0.1 }}
                 >
-                  <div className="text-4xl mb-2">{achievement.icon}</div>
-                  <p className="text-sm font-medium">{achievement.name}</p>
-                  {!achievement.unlocked && (
-                    <p className="text-xs text-muted-foreground mt-1">Locked</p>
-                  )}
-                </GlassCard>
-              </motion.div>
-            ))}
+                  <GlassCard 
+                    className="min-w-[140px] text-center"
+                    hoverable
+                    glowColor="cyan"
+                  >
+                    <div className="text-4xl mb-2">{achievement.icon}</div>
+                    <p className="text-sm font-medium">{achievement.name}</p>
+                  </GlassCard>
+                </motion.div>
+              ))
+            ) : (
+              <GlassCard className="min-w-[200px] text-center opacity-50">
+                <p className="text-sm text-muted-foreground">
+                  No achievements yet. Start procrastinating!
+                </p>
+              </GlassCard>
+            )}
           </div>
         </motion.section>
       </main>

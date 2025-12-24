@@ -1,25 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { ParticleField } from "@/components/ui/ParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { NeonButton } from "@/components/ui/NeonButton";
-import { ArrowLeft, Lock, Sparkles } from "lucide-react";
-
-const achievements = [
-  { id: 1, name: "First Delay", description: "Log your first procrastination", icon: "🐌", unlocked: true, rarity: "Common" },
-  { id: 2, name: "Hour Waster", description: "Waste a full hour in one session", icon: "⏰", unlocked: true, rarity: "Common" },
-  { id: 3, name: "Serial Snoozer", description: "Hit snooze 5 times in a row", icon: "😴", unlocked: true, rarity: "Uncommon" },
-  { id: 4, name: "Excuse Expert", description: "Generate 50 excuses", icon: "🎭", unlocked: true, rarity: "Uncommon" },
-  { id: 5, name: "Chain Champion", description: "Build a 100-block chain", icon: "⛓️", unlocked: true, rarity: "Rare" },
-  { id: 6, name: "Deadline Dancer", description: "Submit something at 11:59 PM", icon: "💃", unlocked: false, rarity: "Rare" },
-  { id: 7, name: "Week Wrecker", description: "Procrastinate every day for a week", icon: "📅", unlocked: false, rarity: "Epic" },
-  { id: 8, name: "Night Owl", description: "Procrastinate past midnight 10 times", icon: "🦉", unlocked: false, rarity: "Epic" },
-  { id: 9, name: "Hash Master", description: "View 1000 block hashes", icon: "🔐", unlocked: false, rarity: "Legendary" },
-  { id: 10, name: "Professional Procrastinator", description: "Reach 1000 hours wasted", icon: "👑", unlocked: false, rarity: "Legendary" },
-  { id: 11, name: "Chaos Agent", description: "Enable Extreme Mode", icon: "🔥", unlocked: false, rarity: "Mythic" },
-  { id: 12, name: "????", description: "???", icon: "❓", unlocked: false, rarity: "Secret" },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { useAchievements } from "@/hooks/useAchievements";
+import { ArrowLeft, Lock, Sparkles, Loader2 } from "lucide-react";
 
 const rarityColors: Record<string, string> = {
   Common: "text-muted-foreground",
@@ -33,9 +20,27 @@ const rarityColors: Record<string, string> = {
 
 export const Achievements = () => {
   const navigate = useNavigate();
-  const [selectedAchievement, setSelectedAchievement] = useState<number | null>(null);
+  const { user, loading: authLoading } = useAuth();
+  const { achievements, isLoading } = useAchievements();
+  
+  const [selectedAchievement, setSelectedAchievement] = useState<string | null>(null);
+
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center animated-gradient">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden animated-gradient">
@@ -81,7 +86,7 @@ export const Achievements = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {achievements.map((achievement, index) => (
             <motion.div
-              key={achievement.id}
+              key={achievement.code}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
@@ -101,7 +106,7 @@ export const Achievements = () => {
                   }`}
                   hoverable={achievement.unlocked}
                   onClick={() => setSelectedAchievement(
-                    selectedAchievement === achievement.id ? null : achievement.id
+                    selectedAchievement === achievement.code ? null : achievement.code
                   )}
                 >
                   <motion.div 
@@ -127,7 +132,7 @@ export const Achievements = () => {
                     {achievement.rarity}
                   </p>
                   
-                  {selectedAchievement === achievement.id && (
+                  {selectedAchievement === achievement.code && (
                     <motion.p
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}

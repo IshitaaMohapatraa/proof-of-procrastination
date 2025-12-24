@@ -24,7 +24,7 @@ export const SplashScreen = () => {
   }, []);
 
   const handleEnter = () => {
-    navigate("/dashboard");
+    navigate("/auth");
   };
 
   return (

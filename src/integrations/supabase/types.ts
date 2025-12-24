@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          badge_code: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_code: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_code?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      procrastination_chain: {
+        Row: {
+          activity_type: string
+          block_index: number
+          created_at: string
+          current_hash: string
+          custom_label: string | null
+          duration_minutes: number
+          excuse: string
+          id: string
+          mood: string
+          prev_hash: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          block_index: number
+          created_at?: string
+          current_hash: string
+          custom_label?: string | null
+          duration_minutes: number
+          excuse: string
+          id?: string
+          mood: string
+          prev_hash: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          block_index?: number
+          created_at?: string
+          current_hash?: string
+          custom_label?: string | null
+          duration_minutes?: number
+          excuse?: string
+          id?: string
+          mood?: string
+          prev_hash?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
