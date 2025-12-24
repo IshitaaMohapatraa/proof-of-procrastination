@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
-import { NeonButton } from "@/components/ui/NeonButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { AchievementWrappedCard } from "@/components/ui/AchievementWrappedCard";
 import { WrappedModal } from "@/components/ui/WrappedModal";
@@ -90,10 +88,6 @@ export const Achievements = () => {
       }));
   }, [achievements]);
 
-  const handleBack = useCallback(() => {
-    navigate("/dashboard", { replace: true });
-  }, [navigate]);
-
   const handleSelectAchievement = useCallback((achievement: {
     code: string;
     name: string;
@@ -122,12 +116,9 @@ export const Achievements = () => {
       <PageHeader />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-4xl mx-auto">
-        <motion.div
-          initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <h1 className="text-4xl font-heading font-bold text-glow-cyan mb-2">
+        {/* Header - Static, no animations */}
+        <div className="text-center mb-10">
+          <h1 className={`text-4xl font-heading font-bold mb-2 ${!reducedMotion ? 'text-glow-cyan' : ''}`}>
             Achievements
           </h1>
           <p className="text-muted-foreground">
@@ -139,17 +130,12 @@ export const Achievements = () => {
               {unlockedCount} / {achievements.length} Unlocked
             </span>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Achievement Grid */}
+        {/* Achievement Grid - Static, no animations */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {achievements.map((achievement, index) => (
-            <motion.div
-              key={achievement.code}
-              initial={reducedMotion ? {} : { opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: Math.min(index * 0.05, 0.5) }} // Cap delay
-            >
+          {achievements.map((achievement) => (
+            <div key={achievement.code}>
               <AchievementWrappedCard
                 code={achievement.code}
                 name={achievement.name}
@@ -165,22 +151,17 @@ export const Achievements = () => {
                   unlockedAt: achievement.unlockedAt,
                 })}
               />
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Secret hint */}
-        <motion.p
-          initial={reducedMotion ? {} : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center text-sm text-muted-foreground mt-8 italic"
-        >
+        {/* Secret hint - Static */}
+        <p className="text-center text-sm text-muted-foreground mt-8 italic">
           Psst... there might be a secret achievement. Keep procrastinating to find it.
-        </motion.p>
+        </p>
       </main>
 
-      {/* Wrapped Modal */}
+      {/* Wrapped Modal - Only renders when open */}
       <WrappedModal
         isOpen={!!selectedAchievement}
         onClose={handleCloseModal}

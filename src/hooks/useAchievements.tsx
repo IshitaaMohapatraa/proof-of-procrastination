@@ -133,7 +133,7 @@ export function useAchievements() {
   const queryClient = useQueryClient();
   const lastCheckedLength = useRef(0);
 
-  // Fetch user's unlocked achievements
+  // Fetch user's unlocked achievements - with aggressive caching
   const achievementsQuery = useQuery({
     queryKey: ["achievements", user?.id],
     queryFn: async () => {
@@ -148,7 +148,12 @@ export function useAchievements() {
       return data as Achievement[];
     },
     enabled: !!user,
-    staleTime: 30000, // Cache for 30 seconds
+    // CRITICAL: Prevent refetching on navigation
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Unlock achievement mutation

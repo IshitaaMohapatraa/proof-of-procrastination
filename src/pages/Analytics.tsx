@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useCallback } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { OptimizedParticleField } from "@/components/ui/OptimizedParticleField";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -55,10 +54,6 @@ export const Analytics = () => {
     [weeklyData]
   );
 
-  const handleBack = useCallback(() => {
-    navigate("/dashboard", { replace: true });
-  }, [navigate]);
-
   const handleLogFirst = useCallback(() => {
     navigate("/log");
   }, [navigate]);
@@ -78,18 +73,15 @@ export const Analytics = () => {
       <PageHeader />
 
       <main className="relative z-10 pt-20 pb-16 px-4 max-w-6xl mx-auto">
-        <motion.div
-          initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <h1 className="text-4xl font-heading font-bold text-glow-cyan mb-2">
+        {/* Header - Static */}
+        <div className="text-center mb-10">
+          <h1 className={`text-4xl font-heading font-bold mb-2 ${!reducedMotion ? 'text-glow-cyan' : ''}`}>
             Analytics
           </h1>
           <p className="text-muted-foreground">
             Statistically impressive avoidance
           </p>
-        </motion.div>
+        </div>
 
         {!hasData ? (
           <GlassCard className="text-center py-16">
@@ -100,15 +92,10 @@ export const Analytics = () => {
           </GlassCard>
         ) : (
           <>
-            {/* Stats Grid */}
+            {/* Stats Grid - Static */}
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
+              {stats.map((stat) => (
+                <div key={stat.label}>
                   <GlassCard hoverable>
                     <p className="text-sm text-muted-foreground mb-2">{stat.label}</p>
                     <p className="text-3xl font-heading font-bold text-primary">
@@ -119,17 +106,13 @@ export const Analytics = () => {
                       {stat.trend}
                     </p>
                   </GlassCard>
-                </motion.div>
+                </div>
               ))}
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
-              {/* Weekly Bar Chart */}
-              <motion.div
-                initial={reducedMotion ? {} : { opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 }}
-              >
+              {/* Weekly Bar Chart - Static */}
+              <div>
                 <GlassCard className="h-full">
                   <div className="flex items-center gap-2 mb-6">
                     <Calendar className="w-5 h-5 text-primary" />
@@ -137,24 +120,20 @@ export const Analytics = () => {
                   </div>
                   
                   <div className="flex items-end justify-between h-48 gap-2">
-                    {weeklyData.map((day, index) => (
+                    {weeklyData.map((day) => (
                       <div key={day.day} className="flex-1 flex flex-col items-center gap-2">
-                        <motion.div
+                        <div
                           className="w-full bg-gradient-to-t from-primary to-accent rounded-t-lg relative group"
-                          initial={reducedMotion ? {} : { height: 0 }}
-                          animate={{ height: `${(day.hours / maxHours) * 100}%` }}
-                          transition={{ delay: 0.5 + index * 0.1, duration: 0.5 }}
                           style={{
-                            boxShadow: "0 0 20px hsl(185 100% 50% / 0.3)",
+                            height: `${(day.hours / maxHours) * 100}%`,
+                            boxShadow: reducedMotion ? undefined : "0 0 20px hsl(185 100% 50% / 0.3)",
                             minHeight: day.hours > 0 ? "8px" : "0px",
                           }}
                         >
-                          <motion.div
-                            className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card px-2 py-1 rounded text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
-                          >
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-card px-2 py-1 rounded text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                             {day.hours}h
-                          </motion.div>
-                        </motion.div>
+                          </div>
+                        </div>
                         <span className="text-xs text-muted-foreground">{day.day}</span>
                       </div>
                     ))}
@@ -164,14 +143,10 @@ export const Analytics = () => {
                     "Weekend warrior of procrastination"
                   </p>
                 </GlassCard>
-              </motion.div>
+              </div>
 
-              {/* Activity Breakdown */}
-              <motion.div
-                initial={reducedMotion ? {} : { opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-              >
+              {/* Activity Breakdown - Static */}
+              <div>
                 <GlassCard className="h-full">
                   <div className="flex items-center gap-2 mb-6">
                     <Clock className="w-5 h-5 text-accent" />
@@ -180,55 +155,36 @@ export const Analytics = () => {
 
                   <div className="space-y-4">
                     {activityBreakdown.slice(0, 5).map((item, index) => (
-                      <motion.div
-                        key={item.activity}
-                        initial={reducedMotion ? {} : { opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 + index * 0.1 }}
-                      >
+                      <div key={item.activity}>
                         <ProgressBar
                           value={item.percentage}
                           label={activityLabels[item.activity] || item.activity}
                           variant={index === 0 ? "cyan" : index === 1 ? "violet" : "gradient"}
                         />
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
 
-                  <motion.p
-                    initial={reducedMotion ? {} : { opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.2 }}
-                    className="text-sm text-accent text-center mt-6 italic"
-                  >
+                  <p className="text-sm text-accent text-center mt-6 italic">
                     "Your phone is judging you"
-                  </motion.p>
+                  </p>
                 </GlassCard>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Roast Section */}
-            <motion.div
-              initial={reducedMotion ? {} : { opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="mt-8"
-            >
+            {/* Roast Section - Static */}
+            <div className="mt-8">
               <GlassCard className="text-center py-8" glowColor="violet">
                 <h3 className="text-xl font-heading font-semibold mb-4">
                   AI-Generated Roast 🔥
                 </h3>
-                <motion.p
-                  className="text-lg text-muted-foreground max-w-xl mx-auto"
-                  animate={reducedMotion ? {} : { opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
+                <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                   "Based on your data, you've spent {Math.round(totalMinutes / 60)} hours procrastinating. 
                   That's enough time to {totalMinutes > 120 ? "learn a new skill" : "take a nice nap"}. 
                   <span className="text-accent"> Priorities.</span>"
-                </motion.p>
+                </p>
               </GlassCard>
-            </motion.div>
+            </div>
           </>
         )}
       </main>

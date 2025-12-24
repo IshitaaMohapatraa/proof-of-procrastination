@@ -1,18 +1,28 @@
-import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ReactNode, memo } from "react";
+import { usePerformance } from "@/hooks/usePerformance";
 
-interface GlassCardProps extends HTMLMotionProps<"div"> {
+interface GlassCardProps {
+  children: ReactNode;
+  className?: string;
   glowColor?: "pink" | "cyan" | "violet" | "red";
   hoverable?: boolean;
+  onClick?: () => void;
 }
 
-export const GlassCard = ({
+/**
+ * Optimized GlassCard - No framer-motion, pure CSS transitions
+ * Hover effects are CSS-only for instant response
+ */
+export const GlassCard = memo(({
   children,
   className,
   glowColor = "pink",
   hoverable = true,
-  ...props
+  onClick,
 }: GlassCardProps) => {
+  const { reducedMotion } = usePerformance();
+
   const glowClasses = {
     pink: "hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)]",
     cyan: "hover:shadow-[0_0_30px_hsl(var(--secondary)/0.3)]",
@@ -21,17 +31,21 @@ export const GlassCard = ({
   };
 
   return (
-    <motion.div
+    <div
       className={cn(
-        "glass-panel p-6 transition-all duration-300 theme-transition",
-        hoverable && glowClasses[glowColor],
+        "glass-panel p-6 theme-transition",
+        // Only add hover effects if not in reduced motion mode
+        !reducedMotion && hoverable && "transition-all duration-200",
+        !reducedMotion && hoverable && "hover:scale-[1.02] hover:-translate-y-1",
+        !reducedMotion && hoverable && glowClasses[glowColor],
+        onClick && "cursor-pointer",
         className
       )}
-      whileHover={hoverable ? { scale: 1.02, y: -4 } : undefined}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      {...props}
+      onClick={onClick}
     >
       {children}
-    </motion.div>
+    </div>
   );
-};
+});
+
+GlassCard.displayName = "GlassCard";

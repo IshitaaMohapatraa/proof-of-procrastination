@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { memo, useMemo } from "react";
+import { usePerformance } from "@/hooks/usePerformance";
 
 interface ProcrastinationGaugeProps {
   score: number; // 0-100
@@ -7,28 +8,41 @@ interface ProcrastinationGaugeProps {
   className?: string;
 }
 
-export const ProcrastinationGauge = ({
+/**
+ * Optimized ProcrastinationGauge - Static SVG, no framer-motion animations
+ * Renders once and stays static for performance
+ */
+export const ProcrastinationGauge = memo(({
   score,
   label = "Procrastination Score™",
   className,
 }: ProcrastinationGaugeProps) => {
-  const circumference = 2 * Math.PI * 120;
-  const strokeDashoffset = circumference - (score / 100) * circumference * 0.75;
-
-  const getScoreColor = () => {
-    if (score < 30) return "stroke-neon-green";
-    if (score < 60) return "stroke-primary";
-    if (score < 80) return "stroke-accent";
-    return "stroke-destructive";
-  };
-
-  const getRoast = () => {
-    if (score < 30) return "Suspiciously productive...";
-    if (score < 50) return "Amateur hour";
-    if (score < 70) return "Now we're talking";
-    if (score < 85) return "Professional procrastinator";
-    return "Legendary avoidance";
-  };
+  const { reducedMotion } = usePerformance();
+  
+  // Memoize calculations
+  const { circumference, strokeDashoffset, scoreColor, roast, needleRotation } = useMemo(() => {
+    const circ = 2 * Math.PI * 120;
+    const offset = circ - (score / 100) * circ * 0.75;
+    
+    let color = "stroke-neon-green";
+    if (score >= 30 && score < 60) color = "stroke-primary";
+    else if (score >= 60 && score < 80) color = "stroke-accent";
+    else if (score >= 80) color = "stroke-destructive";
+    
+    let roastText = "Suspiciously productive...";
+    if (score >= 30 && score < 50) roastText = "Amateur hour";
+    else if (score >= 50 && score < 70) roastText = "Now we're talking";
+    else if (score >= 70 && score < 85) roastText = "Professional procrastinator";
+    else if (score >= 85) roastText = "Legendary avoidance";
+    
+    return {
+      circumference: circ,
+      strokeDashoffset: offset,
+      scoreColor: color,
+      roast: roastText,
+      needleRotation: score * 2.7 - 135,
+    };
+  }, [score]);
 
   return (
     <div className={cn("relative flex flex-col items-center", className)}>
@@ -49,36 +63,30 @@ export const ProcrastinationGauge = ({
           strokeLinecap="round"
         />
         
-        {/* Animated progress arc */}
-        <motion.circle
+        {/* Static progress arc - no animation */}
+        <circle
           cx="130"
           cy="130"
           r="120"
           fill="none"
           strokeWidth="12"
-          className={cn(getScoreColor(), "drop-shadow-lg")}
+          className={cn(scoreColor, "drop-shadow-lg")}
           strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
-          transition={{ duration: 2, ease: "easeOut" }}
+          strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           style={{
-            filter: "drop-shadow(0 0 10px currentColor)",
+            filter: reducedMotion ? undefined : "drop-shadow(0 0 10px currentColor)",
+            transition: reducedMotion ? undefined : "stroke-dashoffset 0.3s ease-out",
           }}
         />
 
-        {/* Needle */}
-        <motion.g
-          initial={{ rotate: 0 }}
-          animate={{ rotate: score * 2.7 - 135 }}
-          transition={{ 
-            duration: 2, 
-            ease: "easeOut",
-            type: "spring",
-            stiffness: 60,
-            damping: 15
+        {/* Static Needle */}
+        <g
+          style={{ 
+            transform: `rotate(${needleRotation}deg)`,
+            transformOrigin: "130px 130px",
+            transition: reducedMotion ? undefined : "transform 0.3s ease-out",
           }}
-          style={{ transformOrigin: "130px 130px" }}
         >
           <line
             x1="130"
@@ -95,38 +103,28 @@ export const ProcrastinationGauge = ({
             r="8"
             fill="hsl(var(--foreground))"
           />
-        </motion.g>
+        </g>
       </svg>
 
-      {/* Score display */}
+      {/* Score display - static */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/4 text-center">
-        <motion.div
-          className="text-5xl font-heading font-bold text-glow-cyan"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
-        >
+        <div className={cn(
+          "text-5xl font-heading font-bold",
+          !reducedMotion && "text-glow-cyan"
+        )}>
           {score}
-        </motion.div>
-        <motion.div
-          className="text-xs text-muted-foreground uppercase tracking-widest mt-1"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-        >
+        </div>
+        <div className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
           {label}
-        </motion.div>
+        </div>
       </div>
 
-      {/* Roast tooltip */}
-      <motion.div
-        className="mt-4 text-sm text-accent font-medium"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.5 }}
-      >
-        "{getRoast()}"
-      </motion.div>
+      {/* Roast tooltip - static */}
+      <div className="mt-4 text-sm text-accent font-medium">
+        "{roast}"
+      </div>
     </div>
   );
-};
+});
+
+ProcrastinationGauge.displayName = "ProcrastinationGauge";
