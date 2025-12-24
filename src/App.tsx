@@ -12,6 +12,10 @@ import { ChainViewer } from "./pages/ChainViewer";
 import { Analytics } from "./pages/Analytics";
 import { Settings } from "./pages/Settings";
 import { Achievements } from "./pages/Achievements";
+import { Profile } from "./pages/Profile";
+import { Certificate } from "./pages/Certificate";
+import { ExcuseGenerator } from "./pages/ExcuseGenerator";
+import { About } from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +36,10 @@ const App = () => (
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/achievements" element={<Achievements />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/certificate" element={<Certificate />} />
+            <Route path="/excuses" element={<ExcuseGenerator />} />
+            <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
