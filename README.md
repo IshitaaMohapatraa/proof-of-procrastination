@@ -1,198 +1,289 @@
-LINK: https://dopamine-decay-drive.lovable.app
+# Proof of Procrastination™
 
-🚀 What is this?
+> **A blockchain-inspired web application that records procrastination sessions using immutable hash chaining to demonstrate data integrity through an unconventional and interactive use case.**
 
-Proof of Procrastination is a satirical yet technically sound web application that cryptographically proves how, when, and where you wasted your time.
+Proof of Procrastination™ is a full-stack web application that explores blockchain-inspired concepts by treating procrastination sessions as immutable records. Every logged session generates a unique hash that references the previous entry, forming a verifiable chain capable of detecting any modification to historical data.
 
-Instead of productivity tracking, this app does the opposite — it celebrates procrastination by logging sessions into an immutable chain, generating achievements, and creating Spotify Wrapped–style shareable cards.
+Developed during a creative hackathon, the project combines modern web development practices with an intentionally humorous concept to demonstrate software engineering, user experience design, state management, and data integrity principles.
 
-It looks useless.
-It is fun.
-But under the hood — it’s real logic, real UX, real engineering.
+---
 
-🧠 The Core Idea
+# Live Demo
 
-If blockchains can track money…
-why can’t we track doomscrolling, overthinking, and “just 5 minutes”?
+**Application:** https://dopamine-decay-drive.lovable.app
 
-Each procrastination session becomes:
+---
 
-A block
+# Overview
 
-With a hash
+Traditional productivity applications encourage users to maximize efficiency and minimize distractions.
 
-Linked to the previous session
+Proof of Procrastination™ intentionally approaches the problem from the opposite perspective by documenting procrastination rather than preventing it.
 
-Forming a Procrastination Chain
+Each session is transformed into an immutable block linked to the previous one using blockchain-inspired hashing principles. If any historical record is modified, the chain integrity is compromised, demonstrating the concept of tamper detection in a simple and engaging manner.
 
-You don’t fix procrastination here.
-You prove it happened.
+Although the application is intentionally satirical, it serves as an educational demonstration of cryptographic data structures, frontend architecture, responsive UI design, and modern web application development.
 
-🎯 Why this exists (Problem)
+---
 
-Students and creators:
+# Key Features
 
-Waste time unconsciously
+## Immutable Procrastination Chain
 
-Forget where their hours go
+Each recorded session contains:
 
-Get shamed by productivity apps
+* Activity
+* Duration
+* Timestamp
+* Mood
+* Optional Notes
+* Generated Hash
+* Previous Block Reference
 
-Existing tools:
+The application validates the chain and visually indicates whether its integrity has been preserved.
 
-Are boring
+---
 
-Feel judgmental
+## Session Logging
 
-Don’t make people want to reflect
+Users can record procrastination activities including predefined categories and custom entries.
 
-This project flips the narrative:
+Examples include:
 
-“You procrastinated. Own it. Archive it. Share it.”
+* Doomscrolling
+* YouTube Spiral
+* VS Code Panic
+* Overthinking
+* "Just Five More Minutes"
 
-✨ Key Features
-🔗 Procrastination Chain
+Each session supports:
 
-Every session is stored as a cryptographically linked block
+* Activity selection
+* Timer
+* Mood tracking
+* Notes
+* Automatic timestamp generation
 
-Shows:
+---
 
-Latest Block Hash (clickable, explained)
+## Achievement System
 
-Chain Length (clickable, visualized)
+A gamified achievement system rewards user activity with unlockable badges.
 
-Total Sessions (clickable, broken down)
+Examples:
 
-⏳ Session Logging
+* First Delay
+* Hour Waster
+* Infinite Loop
+* Chronic Procrastinator
+* Master of Distractions
 
-Log wasted time by activity:
+Achievements are displayed within the user profile and can generate shareable summary cards.
 
-Doomscrolling
+---
 
-Overthinking
+## Wrapped Summary
 
-YouTube spiral
+Inspired by annual digital activity summaries, the application generates personalized reports including:
 
-Existential crisis (yes)
+* Total procrastination time
+* Most frequent activity
+* Peak procrastination period
+* Session statistics
 
-Smooth animations when a block is created
+These summaries are designed to be exported and shared.
 
-🏆 Achievements (Gamified)
+---
 
-Unlock badges like:
+## Certificate Generator
 
-First Delay
+Generate a downloadable certificate summarizing:
 
-Hour Waster
+* Total recorded procrastination
+* Root chain hash
+* Verification summary
 
-Chronic Procrastinator
+---
 
-Badges can be:
+## Theme Support
 
-Displayed on profile
+The application supports multiple interface themes.
 
-Clicked to generate Wrapped cards
+* Dark Mode
+* Light Mode
 
-🎧 Procrastination Wrapped™
+User preferences persist across sessions.
 
-Spotify Wrapped–style flash cards
+---
 
-Shows:
+# 🏗 System Architecture
 
-Total time wasted
+```text
+                        User
+                          │
+                          ▼
+                  React + TypeScript
+                          │
+               React Router + State
+                          │
+                          ▼
+                     Supabase Auth
+                          │
+                          ▼
+                  PostgreSQL Database
+                          │
+                          ▼
+               Session & Block Storage
+                          │
+                          ▼
+              Hash Generation & Validation
+                          │
+                          ▼
+             Immutable Procrastination Chain
+```
 
-Most wasted activity
+---
 
-Peak procrastination hour
+# Technology Stack
 
-One-click share to social media
+## Frontend
 
-🌗 Dark / Light Modes
+* React
+* TypeScript
+* Tailwind CSS
+* Vite
 
-Dark Mode: Neon pink text, cyberpunk vibe
+## Backend
 
-Light Mode: Dating-app aesthetic (clean, playful)
+* Supabase
 
-Theme persists across sessions
+## Database
 
-🌪 Chaos Mode
+* PostgreSQL
 
-Optional mode for dramatic UI:
+## Authentication
 
-Faster animations
+* Supabase Authentication
 
-Glitch effects
+## Deployment
 
-Loud transitions
+* Lovable Hosting
 
-Completely optional. Completely unnecessary. Completely fun.
+---
 
-🧩 Pages & Navigation
+# Technical Highlights
 
-Landing Page – Dramatic intro, visuals, CTA
+* Blockchain-inspired immutable data model
+* Hash-based chain validation
+* Responsive user interface
+* Component-based React architecture
+* Interactive dashboard
+* Gamification through achievements
+* Shareable "Wrapped" summaries
+* Theme persistence
+* Supabase authentication and cloud database integration
 
-Login / Entry Page – Minimal, smooth transition
+---
 
-Dashboard – Stats + chain summary
+# Project Structure
+```text
+src/
+├── assets/
+├── components/
+├── contexts/
+├── hooks/
+├── lib/
+├── pages/
+├── services/
+├── utils/
+├── App.tsx
+└── main.tsx
 
-Chain Viewer – Visual explanation of hashes & blocks
+---
 
-Log Session Page – Add new procrastination block
+# Getting Started
 
-Achievements Page – Badges & Wrapped cards
+Clone the repository
 
-Wrapped Card View – Shareable certificate
+```bash
+git clone https://github.com/IshitaaMohapatraa/proof-of-procrastination.git
+```
 
-Profile Page – User stats + achievements
+Navigate to the project directory
 
-Settings – Theme, Chaos Mode, preferences
+```bash
+cd proof-of-procrastination
+```
 
-Explainer Modals – For hash, chain, sessions
+Install dependencies
 
-About / Philosophy – Why this exists
+```bash
+npm install
+```
 
-🛠 Tech Stack
+Start the development server
 
-Frontend
+```bash
+npm run dev
+```
 
-React
+The application will be available at:
 
-Tailwind CSS
+```text
+http://localhost:5173
+```
 
-Advanced animations & hover effects
+---
 
-Lovable AI (UI generation & iteration)
+# Learning Outcomes
 
-Backend (Planned / Extendable)
+This project provided practical experience in:
 
-Supabase (Auth + Database)
+* Designing component-based React applications
+* State management and data flow
+* Responsive interface development
+* Blockchain-inspired hashing concepts
+* Data integrity validation
+* Authentication and database integration using Supabase
+* Building interactive dashboards
+* Creating reusable UI components
+* Modern frontend development with TypeScript
 
-PostgreSQL schema for:
+---
 
-Users
+# Future Enhancements
 
-Sessions
+Potential improvements include:
 
-Blocks
+* Real SHA-256 cryptographic implementation
+* Cloud synchronization across multiple devices
+* Progressive Web App (PWA) support
+* Advanced analytics and data visualization
+* Public profile sharing
+* Friend leaderboards
+* Exportable chain history
+* Mobile application
+* Real-time synchronization using Supabase subscriptions
 
-Achievements
+---
 
-Hosting
+# Disclaimer
 
-Lovable App Hosting
+Proof of Procrastination™ was developed as part of a creative hackathon. The project intentionally applies software engineering concepts to a humorous use case to demonstrate frontend architecture, backend integration, cryptographic data structures, and interactive user experience design.
 
-🧪 Is this actually useful?
+While the concept is satirical, the implementation reflects practical software development principles and serves as an exploration of how technical systems can be applied in unconventional contexts.
 
-Yes — but emotionally, not operationally.
+---
 
-It helps users:
+# License
 
-Reflect without guilt
+This project is intended for educational, portfolio, and demonstration purposes.
 
-Laugh at their habits
+---
 
-Become aware through play
+# Author
 
-Share their behavior socially
+**Ishita Mohapatra**
 
-It’s intentionally “useless”, but thoughtfully built.
+If you found this project interesting, feel free to explore the repository, provide feedback, or connect with me.
+
